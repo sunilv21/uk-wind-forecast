@@ -113,13 +113,13 @@ export default function MetricCards({ metrics, coverage, units }: Props) {
       <Card
         label="Coverage"
         value={coverage.coveragePct !== null ? `${coverage.coveragePct}%` : '—'}
-        sub={`${coverage.matchedPeriods} of ${coverage.totalForecastPeriods} periods matched`}
-        tag={coverage.missingActuals > 0 ? `${coverage.missingActuals} missing` : 'Complete'}
-        tagColor={coverage.missingActuals > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}
-        borderColor={coverage.missingActuals > 0 ? 'border-t-red-400' : 'border-t-emerald-500'}
-        iconBg={coverage.missingActuals > 0 ? 'bg-red-50' : 'bg-emerald-50'}
+        sub={`${coverage.matchedPeriods} / ${coverage.expectedPeriods} matched · ${coverage.missingActuals} no actual · ${coverage.missingForecasts} no forecast · ${coverage.missingBoth} missing both`}
+        tag={coverage.missingActuals > 0 || coverage.missingForecasts > 0 || coverage.missingBoth > 0 ? `${coverage.missingActuals + coverage.missingForecasts + coverage.missingBoth} missing` : 'Complete'}
+        tagColor={coverage.missingActuals > 0 || coverage.missingForecasts > 0 || coverage.missingBoth > 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-700'}
+        borderColor={coverage.missingActuals > 0 || coverage.missingForecasts > 0 || coverage.missingBoth > 0 ? 'border-t-red-400' : 'border-t-emerald-500'}
+        iconBg={coverage.missingActuals > 0 || coverage.missingForecasts > 0 || coverage.missingBoth > 0 ? 'bg-red-50' : 'bg-emerald-50'}
         icon={
-          <svg className={`w-5 h-5 ${coverage.missingActuals > 0 ? 'text-red-400' : 'text-emerald-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={`w-5 h-5 ${coverage.missingActuals > 0 || coverage.missingForecasts > 0 || coverage.missingBoth > 0 ? 'text-red-400' : 'text-emerald-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         }

@@ -1,253 +1,173 @@
 # UK Wind Generation Forecast & Accuracy Dashboard
 
-**Live demo:** [uk-wind-forecast-topaz.vercel.app](https://uk-wind-forecast-topaz.vercel.app)
-**API:** [uk-wind-forecast-1vw9.onrender.com/api/health](https://uk-wind-forecast-1vw9.onrender.com/api/health)
+**Live demo:** [uk-wind-forecast-topaz.vercel.app](https://uk-wind-forecast-topaz.vercel.app)  
+**API:** [uk-wind-forecast-1vw9.onrender.com/api/health](https://uk-wind-forecast-1vw9.onrender.com/api/health)  
+**GitHub:** [github.com/sunilv21/uk-wind-forecast](https://github.com/sunilv21/uk-wind-forecast)
 
-A full-stack production-grade dashboard for analysing UK wind generation forecast accuracy and day-ahead procurement gap analysis, built on live data from the [Elexon BMRS API](https://www.elexon.co.uk/data/balancing-mechanism-reporting-service/).
+A full-stack production-grade dashboard for analysing GB wind generation forecast accuracy and wind balancing exposure, built on live data from the [Elexon BMRS API](https://www.elexon.co.uk/data/balancing-mechanism-reporting-service/).
 
 ---
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Live Data Sources](#live-data-sources)
-- [Architecture](#architecture)
+- [Business Problem](#business-problem)
 - [Features](#features)
-- [Key Algorithms](#key-algorithms)
+- [Data Sources](#data-sources)
+- [Architecture](#architecture)
+- [Forecast Selection Methodology](#forecast-selection-methodology)
 - [Accuracy Metrics](#accuracy-metrics)
-- [Procurement Gap Analysis](#procurement-gap-analysis)
-- [API Reference](#api-reference)
+- [Wind Balancing Exposure](#wind-balancing-exposure)
+- [Assumptions and Limitations](#assumptions-and-limitations)
+- [Installation](#installation)
 - [Local Development](#local-development)
-- [Docker Deployment](#docker-deployment)
-- [Configuration](#configuration)
+- [Docker](#docker)
+- [Environment Variables](#environment-variables)
+- [API Endpoints](#api-endpoints)
 - [Project Structure](#project-structure)
-- [Future Scope](#future-scope)
-- [Tools Used](#tools-used)
+- [AI Tools Used](#ai-tools-used)
 
 ---
 
-## Overview
+## Business Problem
 
-This dashboard answers two questions for GB electricity traders and analysts:
+GB electricity traders making day-ahead procurement decisions rely on wind generation forecasts. When forecasts are wrong, the imbalance must be corrected in the balancing market — often at significantly higher cost.
 
-1. **How accurate are wind generation forecasts?** — Compare WINDFOR day-ahead forecasts against FUELHH actuals, broken down by lead time, hour, and trend over multiple days.
-2. **What is the procurement gap?** — How much additional power did you need to buy (or sell back) on the balancing market because the wind forecast was wrong? Which hours were you short, and by how much?
+This dashboard answers:
 
-All data is pulled live from Elexon BMRS with no API key required.
+1. **How accurate are WINDFOR day-ahead forecasts?** — MAE, RMSE, Bias and WAPE by delivery period, lead time and multi-day trend.
+2. **What was the wind forecast exposure?** — When wind produced less or more than forecast, how large was the deviation, and what energy (MWh) was involved?
+
+> **Important:** Consumer demand data is not included in the permitted dataset scope. This application measures *wind forecast error exposure only*, not total electricity procurement requirement.
 
 ---
 
-## Live Data Sources
+## Features
 
-All data comes from the [Elexon BMRS REST API](https://data.elexon.co.uk/bmrs/api/v1).
+- **Wind Forecast Accuracy** tab: MAE, RMSE, Bias, WAPE; 48-period forecast vs actual chart; lead-time breakdown; error histogram; multi-day trend; full period table with publish timestamps and missing-data status
+- **Wind Exposure Analysis** tab: overforecast (shortfall) and underforecast (surplus) exposure in MWh; sortable detail tables; wind error chart
+- **Documentation** tab: embedded in-app docs
+- 30-minute resolution preserved throughout (no hourly aggregation)
+- Explicit missing-data status for every delivery period
+- Default analysis period: January 2026
 
-| Dataset | Description | Granularity | Key Fields |
-|---------|-------------|-------------|------------|
-| `WINDFOR` | Wind generation forecast | Hourly | `startTime`, `publishTime`, `generation` (MW) |
-| `FUELHH` | Half-hourly actuals by fuel type | 30 min | `startTime`, `fuelType`, `generation` (MW) |
-| `NDF` | National Demand Forecast | 30 min | `startTime`, `publishTime`, `demand` (MW), `boundary` |
+---
 
-**WINDFOR** — Each row is a forecast for a specific delivery hour, published at a specific time. Multiple forecasts exist per delivery hour (updated every few hours). The system selects the latest forecast published **before** the decision cutoff.
+## Data Sources
 
-**FUELHH** — Contains actuals for all fuel types: `WIND`, `SOLAR`, `CCGT`, `NUCLEAR`, etc. Summing all `fuelType` values for a settlement period gives total actual demand.
+Only two Elexon BMRS datasets are used:
 
-**NDF** — National demand forecast. Filtered with `boundary=N` for the standard GB boundary. Half-hourly granularity matched to FUELHH.
+| Dataset | Description | Resolution | Key Fields |
+|---|---|---|---|
+| `WINDFOR` | Wind generation forecast | 30 min | `startTime`, `publishTime`, `generation` (MW) |
+| `FUELHH` `fuelType=WIND` | Actual wind generation | 30 min | `startTime`, `generation` (MW) |
+
+NDF, total FUELHH demand and all other datasets are **not used**.
+
+API documentation: [bmrs.elexon.co.uk/api-documentation](https://bmrs.elexon.co.uk/api-documentation)
+
+See [docs/data-sources.md](docs/data-sources.md) for full details.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│              React Frontend (Vite)          │
-│  Dashboard.tsx → 3 tabs                     │
-│  ├── Wind Forecast Accuracy                 │
-│  ├── Procurement Gap Analysis               │
-│  └── Documentation (iframe)                │
-└──────────────┬──────────────────────────────┘
-               │ HTTP (proxied via nginx in prod)
-┌──────────────▼──────────────────────────────┐
-│         FastAPI Backend (Python)            │
-│  /api/analysis   → wind accuracy            │
-│  /api/procurement → procurement gap         │
-│  /api/trend      → multi-day trend          │
-│  /api/health     → upstream ping            │
-└──────────────┬──────────────────────────────┘
-               │ HTTPS
-┌──────────────▼──────────────────────────────┐
-│          Elexon BMRS API                    │
-│  data.elexon.co.uk/bmrs/api/v1              │
-│  WINDFOR · FUELHH · NDF  (no auth)          │
-└─────────────────────────────────────────────┘
+React 18 + TypeScript + Vite + Tailwind + Recharts
+          (Vercel static build)
+                  │
+                  │ HTTPS REST
+                  ▼
+       FastAPI + Python 3.11 + uvicorn
+          (Render Docker container)
+                  │
+                  │ HTTPS GET
+                  ▼
+         Elexon BMRS API v1
+    WINDFOR + FUELHH (fuelType=WIND)
 ```
 
-### Technology Stack
-
-| Layer | Technology |
-|-------|------------|
-| Frontend | React 18, TypeScript, Vite, Tailwind CSS v3, Recharts |
-| Backend | Python 3.11, FastAPI, httpx, uvicorn |
-| Serving | nginx 1.27-alpine (production) |
-| Containerisation | Docker, Docker Compose |
+See [docs/architecture.md](docs/architecture.md) for component diagram.
 
 ---
 
-## Features
+## Forecast Selection Methodology
 
-### Wind Forecast Accuracy Tab
+For each of the 48 expected delivery periods on the delivery date:
 
-- **Metric cards** — MAE, RMSE, bias, MAPE, WAPE, correlation, max error, capacity factor
-- **Forecast vs Actual chart** — Recharts `ComposedChart` with dual series
-- **Error over time chart** — Per-hour error bars colour-coded by magnitude
-- **Error histogram** — Distribution of forecast errors across the day
-- **Lead-time breakdown** — Accuracy grouped by how far ahead the forecast was made (0–6 h, 6–12 h, etc.)
-- **Multi-day trend chart** — Up to 30-day rolling MAE/RMSE trend
-- **Period table** — All delivery periods with sortable columns
+1. Generate the complete 48-period timeline (00:00–23:30 UTC on delivery date)
+2. For each period, select the **latest forecast published on or before the decision cutoff**:
+   ```
+   selected_publishTime = MAX(publishTime WHERE publishTime ≤ cutoff)
+   ```
+3. Match against actual generation by exact 30-minute `startTime`
+4. Assign status: `matched`, `missing_forecast`, `missing_actual`, or `missing_both`
 
-### Procurement Gap Analysis Tab
+**Day-ahead rule:** delivery date = decision date + 1 calendar day.
 
-- **Summary cards** — Average planned purchase, average actual need, peak actual, shortfall hours count
-- **Under-bought panel** — Total MW·h shortfall, worst hour, average shortfall per hour
-- **Over-bought panel** — Total MW·h over-buy, average per hour, wind MAE driving it
-- **Planned vs Actual chart** — Orange line (planned), slate dashed line (actual), blue bars (shortfall hours), amber bars (over-bought hours)
-- **Shortfall Hours table** — Only under-bought periods, **sortable by any column**
-- **All Periods table** — Every matched period with gap error, absolute gap, gap %, **sortable by any column**
-
-### Documentation Tab
-
-- Complete project documentation served as a standalone HTML page
-- Sections: Introduction, Architecture, Data Flow, API field tables, Forecast Selection, Granularity Mismatch, Accuracy Metrics, Procurement Gap formulas, API Reference, Caching & Retry, Local Dev, Docker, Config, Tools Used, Future Scope
-
----
-
-## Key Algorithms
-
-### Forecast Selection
-
-For a given `(decision_date, cutoff_time)`:
-
-1. Set `cutoff_dt = decision_date + cutoff_time` (UTC)
-2. From WINDFOR, keep only forecasts where `publishTime ≤ cutoff_dt`
-3. For each `startTime`, pick the row with the **latest** `publishTime` (most up-to-date forecast available at cutoff)
-4. Keep only periods where `startTime > cutoff_dt` (forward-looking only)
-5. Compute `leadHours = (startTime − cutoff_dt).total_seconds() / 3600`
-
-### Granularity Mismatch
-
-WINDFOR is **hourly**. FUELHH and NDF are **half-hourly**. Resolution:
-
-- For each hourly forecast bucket, find the two 30-min settlement periods that fall within it
-- Average their values to get a single hourly actual
-- This ensures a like-for-like comparison
-
-### Residual Demand
-
-```
-Residual forecast = NDF demand forecast − WINDFOR wind forecast
-Residual actual   = FUELHH total demand − FUELHH wind actual
-
-Procurement gap error = Residual forecast − Residual actual
-  > 0  →  Over-bought  (paid for power not needed)
-  < 0  →  Under-bought (must buy more on balancing market)
-```
+See [docs/methodology.md](docs/methodology.md) for full details.
 
 ---
 
 ## Accuracy Metrics
 
-| Metric | Formula | Meaning |
-|--------|---------|---------|
-| MAE | `mean(|forecast − actual|)` | Average absolute error in MW |
-| RMSE | `sqrt(mean((forecast − actual)²))` | Penalises large errors more than MAE |
-| Bias | `mean(forecast − actual)` | Systematic over/under-forecasting |
-| MAPE | `mean(|error / actual| × 100)` | % error relative to actuals |
-| WAPE | `sum(|error|) / sum(|actual|) × 100` | Weighted % — robust when actuals near zero |
-| Correlation | Pearson r between forecast and actual | Directional accuracy |
-| Capacity Factor | `mean(actual) / 30,000 MW × 100` | Wind output as % of assumed 30 GW installed capacity |
+Computed from matched periods only. Missing values are never treated as zero.
+
+| Metric | Formula |
+|---|---|
+| MAE | Mean(|Forecast − Actual|) |
+| RMSE | √(Mean((Forecast − Actual)²)) |
+| Bias | Mean(Forecast − Actual) — positive = systematic over-forecast |
+| WAPE | Sum(|Error|) / Sum(|Actual|) × 100 |
+| Coverage | Matched periods / 48 × 100 |
 
 ---
 
-## Procurement Gap Analysis
+## Wind Balancing Exposure
 
-The procurement gap is the commercial consequence of wind forecast error for a power trader who used the day-ahead forecast to decide how much electricity to procure.
+Per 30-minute matched period:
 
 ```
-What you planned to buy  =  NDF forecast  −  WINDFOR forecast
-What you actually needed =  Actual demand −  Actual wind generation
+windError = windForecast − actualWind
 
-Procurement gap          =  Planned to buy − Actually needed
+overforecast_energy  = max(0, windError)  × 0.5 h   [MWh]
+underforecast_energy = max(0, −windError) × 0.5 h   [MWh]
 ```
 
-| Gap | Meaning | Commercial consequence |
-|-----|---------|----------------------|
-| Negative (blue) | Under-bought | Must purchase shortfall on balancing market, typically at a premium (SBP) |
-| Positive (amber) | Over-bought | Paid for capacity not needed — sell back or absorb as wasted cost (SSP) |
+The 0.5-hour factor is essential — each period is 30 minutes, not 1 hour.
 
-**Metrics computed:**
-- Total shortfall MW·h across all under-bought hours
-- Worst shortfall hour (delivery time + magnitude)
-- Procurement MAE, RMSE, Bias, WAPE across all matched periods
+See [docs/assumptions-and-limitations.md](docs/assumptions-and-limitations.md) for scope limitations.
 
 ---
 
-## API Reference
+## Assumptions and Limitations
 
-Base URL (local dev): `http://localhost:8000`
+- **No consumer demand data** — total electricity procurement cannot be calculated
+- **Capacity factor** uses assumed 30 GW installed GB wind capacity (not from Elexon)
+- **UTC timestamps** throughout — no local time conversion
+- **January 2026** is the default analysis period
 
-### `GET /api/analysis`
-
-Wind forecast accuracy analysis for a single day.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `date` | `YYYY-MM-DD` | Yes | Decision date (UTC) |
-| `cutoff` | `HH:MM` | Yes | Decision cutoff time (UTC) |
-
-**Returns:** `AnalysisResponse` — metrics object, periods array, lead-time breakdown, coverage stats.
+See [docs/assumptions-and-limitations.md](docs/assumptions-and-limitations.md) for full list.
 
 ---
 
-### `GET /api/procurement`
-
-Procurement gap analysis for a single day.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `date` | `YYYY-MM-DD` | Yes | Decision date (UTC) |
-| `cutoff` | `HH:MM` | Yes | Decision cutoff time (UTC) |
-
-**Returns:** `ProcurementResponse` — procurement metrics, wind metrics, periods array with `residualForecast`, `residualActual`, `procurementGapError`, `procurementGapAbs`, `procurementGapPct`.
-
----
-
-### `GET /api/trend`
-
-Multi-day rolling accuracy trend.
-
-| Parameter | Type | Required | Default | Description |
-|-----------|------|----------|---------|-------------|
-| `end_date` | `YYYY-MM-DD` | Yes | — | Last date in range |
-| `cutoff` | `HH:MM` | Yes | — | Decision cutoff time |
-| `days` | integer | No | `7` | Number of days (max: `MAX_TREND_DAYS`) |
-
-**Returns:** Array of daily `{ date, mae, rmse, bias, mape }` objects.
-
----
-
-### `GET /api/health`
-
-Health check — pings Elexon upstream.
-
-**Returns:** `{ status, upstream_elexon, latency_ms }`
-
----
-
-## Local Development
+## Installation
 
 ### Prerequisites
 
 - Python 3.11+
-- Node.js 18+
+- Node.js 20+
+- Docker + Docker Compose (for containerised run)
+
+### Clone
+
+```bash
+git clone https://github.com/sunilv21/uk-wind-forecast.git
+cd uk-wind-forecast
+```
+
+---
+
+## Local Development
 
 ### Backend
 
@@ -256,14 +176,21 @@ cd backend
 python -m venv .venv
 # Windows:
 .venv\Scripts\activate
-# macOS/Linux:
+# Mac/Linux:
 source .venv/bin/activate
 
 pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
-Backend runs at `http://localhost:8000`. API docs at `http://localhost:8000/docs`.
+API available at: http://localhost:8000/api/health
+
+### Run backend tests
+
+```bash
+cd backend
+python -m pytest tests/ -v
+```
 
 ### Frontend
 
@@ -273,63 +200,61 @@ npm install
 npm run dev
 ```
 
-Frontend runs at `http://localhost:5173`. The Vite dev server proxies `/api/*` to the backend.
+App available at: http://localhost:5173
 
-### Environment Variables
-
-Copy `.env.example` to `backend/.env` to override defaults:
-
+Set backend URL:
 ```bash
-cp .env.example backend/.env
+# frontend/.env.local
+VITE_API_BASE_URL=http://localhost:8000
 ```
 
 ---
 
-## Docker Deployment
+## Docker
 
-### Prerequisites
-
-- Docker Desktop (or Docker Engine + Compose plugin)
-
-### Run
+### Run both services
 
 ```bash
+cp .env.example .env
 docker compose up --build
 ```
 
-- Frontend: `http://localhost` (port 80)
-- Backend: `http://localhost:8000`
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000/api/health
 
-The frontend container waits for the backend health check to pass before starting (`depends_on: condition: service_healthy`).
+### Stop
 
-### Production features in Docker
-
-- **Non-root containers** — both backend and frontend run as unprivileged users
-- **Health checks** — Docker polls `/api/health` every 30 s
-- **nginx** — gzip compression, immutable asset caching (1 year), security headers, SPA fallback
-- **Security headers** — `X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`, `server_tokens off`
+```bash
+docker compose down
+```
 
 ---
 
-## Configuration
+## Environment Variables
 
-All backend settings are environment variables with sensible defaults:
+See [.env.example](.env.example) for all variables with descriptions.
+
+Key variables:
 
 | Variable | Default | Description |
-|----------|---------|-------------|
-| `ELEXON_BASE_URL` | `https://data.elexon.co.uk/bmrs/api/v1` | Elexon API base URL |
-| `CORS_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Allowed CORS origins (comma-separated) |
-| `REQUEST_TIMEOUT_SECONDS` | `30` | Per-request timeout to Elexon |
-| `MAX_RETRIES` | `3` | Retry attempts on network/5xx errors |
-| `CACHE_TTL_SECONDS` | `300` | Cache TTL for data < 48 h old (5 min) |
-| `CACHE_TTL_HISTORICAL` | `3600` | Cache TTL for historical data (1 hr) |
-| `MAX_TREND_DAYS` | `30` | Maximum days for trend endpoint |
-| `LOG_LEVEL` | `INFO` | Python logging level |
+|---|---|---|
+| `VITE_API_BASE_URL` | `http://localhost:8000` | Backend URL (frontend build-time) |
+| `CORS_ORIGINS` | `http://localhost:5173,...` | Allowed frontend origins |
+| `UK_INSTALLED_WIND_MW` | `30000` | Assumed GB installed wind capacity |
+| `LOG_LEVEL` | `INFO` | Backend log level |
 
-### Caching & Retry
+---
 
-- **In-memory TTL cache** — SHA-256 keyed on URL + params. Recent data (< 48 h old) cached for 5 min; historical for 1 hr.
-- **Retry with exponential backoff** — 3 attempts, waiting `2^(attempt−1)` seconds between retries. 4xx errors are not retried.
+## API Endpoints
+
+| Endpoint | Description |
+|---|---|
+| `GET /api/health` | Backend and upstream health check |
+| `GET /api/analysis?decision_date=YYYY-MM-DD&cutoff_time=HH:MM` | Wind forecast accuracy analysis |
+| `GET /api/procurement?decision_date=YYYY-MM-DD&cutoff_time=HH:MM` | Wind balancing exposure |
+| `GET /api/trend?start_date=...&end_date=...&cutoff_time=...` | Multi-day accuracy trend |
+
+Full documentation: [docs/api-reference.md](docs/api-reference.md)
 
 ---
 
@@ -339,102 +264,50 @@ All backend settings are environment variables with sensible defaults:
 uk-wind-forecast/
 ├── backend/
 │   ├── app/
-│   │   ├── api/
-│   │   │   └── routes.py          # FastAPI route handlers
-│   │   ├── services/
-│   │   │   ├── elexon_client.py   # HTTP client with cache + retry
-│   │   │   ├── forecast_selection.py  # Latest-forecast-per-slot algorithm
-│   │   │   ├── metrics.py         # MAE, RMSE, bias, WAPE, correlation
-│   │   │   └── procurement.py     # Residual demand + gap calculations
-│   │   ├── config.py              # All env-configurable settings
-│   │   ├── main.py                # FastAPI app, middleware, logging
-│   │   └── schemas.py             # Pydantic response models
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   ├── schemas.py
+│   │   ├── api/routes.py
+│   │   └── services/
+│   │       ├── elexon_client.py
+│   │       ├── forecast_selection.py
+│   │       ├── metrics.py
+│   │       └── procurement.py
+│   ├── tests/
+│   │   ├── test_forecast_selection.py
+│   │   ├── test_metrics.py
+│   │   ├── test_procurement.py
+│   │   └── test_api_routes.py
 │   ├── Dockerfile
-│   ├── .dockerignore
 │   └── requirements.txt
 ├── frontend/
-│   ├── public/
-│   │   └── docs.html              # Standalone documentation page
 │   ├── src/
-│   │   ├── api/
-│   │   │   └── client.ts          # fetch wrappers for all API endpoints
+│   │   ├── pages/Dashboard.tsx
 │   │   ├── components/
-│   │   │   ├── DateControls.tsx
-│   │   │   ├── ErrorBoundary.tsx
-│   │   │   ├── ErrorChart.tsx
-│   │   │   ├── ErrorHistogram.tsx
-│   │   │   ├── ForecastChart.tsx
-│   │   │   ├── LeadTimeChart.tsx
-│   │   │   ├── MetricCards.tsx
-│   │   │   ├── PeriodTable.tsx
-│   │   │   ├── ProcurementView.tsx
-│   │   │   ├── SummaryStrip.tsx
-│   │   │   └── TrendChart.tsx
-│   │   ├── pages/
-│   │   │   └── Dashboard.tsx      # Three-tab main page
-│   │   └── types/
-│   │       └── api.ts             # TypeScript interfaces for API responses
+│   │   ├── api/client.ts
+│   │   └── types/api.ts
+│   ├── public/docs.html
 │   ├── Dockerfile
-│   ├── .dockerignore
-│   ├── nginx.conf                 # Production nginx config
-│   └── vite.config.ts
+│   └── vercel.json
 ├── docs/
-│   └── index.html                 # Mirror of frontend/public/docs.html
+│   ├── architecture.md
+│   ├── data-sources.md
+│   ├── methodology.md
+│   ├── api-reference.md
+│   └── assumptions-and-limitations.md
+├── docker-compose.yml
 ├── .env.example
-├── .gitattributes
-├── .gitignore
-└── docker-compose.yml
+├── render.yaml
+└── README.md
 ```
 
 ---
 
-## Future Scope
+## AI Tools Used
 
-### Business & Analytical Gaps
+This project was developed with the assistance of AI tools:
 
-| Priority | Feature | Impact |
-|----------|---------|--------|
-| 1 — Critical | **Solar generation** (Sheffield Solar API) | Fixes residual demand — solar ignored entirely today |
-| 2 — Critical | **Imbalance prices** (Elexon ISPSTACK — SBP/SSP) | Converts MW gap errors into £ cost |
-| 3 — High | **Intraday cutoff comparison** | Shows when re-trading pays off |
-| 4 — High | **Demand forecast accuracy** (NDF vs actual) | Decompose gap into wind error vs demand error |
-| 5 — Medium | **Seasonal / monthly breakdown** | Long-range risk calendar |
+- **Claude (Anthropic)** — code generation, architecture design, test writing, documentation
+- **Claude Code** — iterative implementation, debugging, deployment configuration
 
-### Additional Data Platforms
-
-| Platform | What it adds |
-|----------|-------------|
-| [Sheffield Solar](https://www.solar.sheffield.ac.uk/) | GB-wide solar forecast, free non-commercial API |
-| Elexon ISPSTACK | SBP/SSP imbalance prices — same BMRS API |
-| [National Grid ESO Data Portal](https://www.nationalgrideso.com/data-portal) | Interconnector flows, embedded wind/solar |
-| N2EX / EPEX SPOT | Day-ahead market clearing prices |
-| Elexon SOSO | Balancing Mechanism actions and costs |
-
-### Technical Gaps
-
-- **CSV / Excel export** — download any table from the dashboard
-- **Authentication** — API key or OAuth2 for commercial deployment
-- **Rate limiting** — per-IP throttle on `/api/trend` (fires up to 30 Elexon requests)
-- **Unit & integration tests** — pytest for backend calculations, Vitest for frontend
-- **Comparison mode** — side-by-side view of two dates or two cutoff times
-
----
-
-## Tools Used
-
-### Research & Domain Knowledge
-- **ChatGPT** — GB electricity market structure, Elexon BMRS API exploration, procurement gap business logic
-- **Google Gemini** — Elexon dataset field definitions, settlement period conventions, balancing mechanism background
-
-### Development
-- **Claude Code (VS Code extension + CLI)** — all code written and iterated using Claude Code across four phases:
-  1. Backend API design (FastAPI, Elexon client, metrics)
-  2. Frontend build (React, Recharts charts, Tailwind layout)
-  3. Procurement gap feature (residual demand, under/over analysis, sortable tables)
-  4. Production hardening (Docker, nginx, retry, cache, Error Boundary, documentation)
-
----
-
-## Licence
-
-MIT — free to use, modify and distribute.
+All AI-generated code was reviewed, tested and validated against the Elexon BMRS API and assignment requirements.

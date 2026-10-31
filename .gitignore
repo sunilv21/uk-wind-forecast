@@ -1,12 +1,11 @@
 # Python
 backend/.venv/
-backend/__pycache__/
-backend/app/__pycache__/
-backend/app/api/__pycache__/
-backend/app/services/__pycache__/
-*.pyc
-*.pyo
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
 .env
+.pytest_cache/
 
 # Node
 frontend/node_modules/

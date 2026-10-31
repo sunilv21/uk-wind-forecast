@@ -12,17 +12,16 @@ import TrendChart from '../components/TrendChart'
 import PeriodTable from '../components/PeriodTable'
 import ProcurementView from '../components/ProcurementView'
 
-function yesterdayISO(): string {
-  const d = new Date()
-  d.setUTCDate(d.getUTCDate() - 1)
-  return d.toISOString().slice(0, 10)
+// Default to mid-January 2026 — the assignment's required analysis period
+function defaultDate(): string {
+  return '2026-01-15'
 }
 
 type Tab = 'wind' | 'procurement' | 'docs'
 
 export default function Dashboard() {
   const [tab, setTab] = useState<Tab>('wind')
-  const [decisionDate, setDecisionDate] = useState(yesterdayISO)
+  const [decisionDate, setDecisionDate] = useState(defaultDate)
   const [cutoffTime, setCutoffTime] = useState('10:00')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,7 +45,7 @@ export default function Dashboard() {
     }
   }, [decisionDate, cutoffTime, tab])
 
-  useEffect(() => { run(decisionDate, cutoffTime, 'wind') }, [])
+  useEffect(() => { run(defaultDate(), cutoffTime, 'wind') }, [])
 
   function switchTab(t: Tab) {
     setTab(t)
@@ -71,7 +70,7 @@ export default function Dashboard() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-white tracking-tight">UK Wind & Procurement Dashboard</h1>
-              <p className="text-blue-200 text-xs mt-0.5">Elexon BMRS · WINDFOR · FUELHH · NDF · Live data</p>
+              <p className="text-blue-200 text-xs mt-0.5">Elexon BMRS · WINDFOR · FUELHH (WIND) · 30-minute data</p>
             </div>
           </div>
           <div className="hidden md:flex items-center gap-2 bg-white/10 rounded-xl px-4 py-2">
@@ -84,7 +83,7 @@ export default function Dashboard() {
         <div className="max-w-screen-xl mx-auto px-6 pb-0 flex gap-1">
           {([
             { key: 'wind', label: 'Wind Forecast Accuracy', icon: '🌬️' },
-            { key: 'procurement', label: 'Procurement Gap Analysis', icon: '⚡' },
+            { key: 'procurement', label: 'Wind Exposure Analysis', icon: '⚡' },
             { key: 'docs', label: 'Documentation', icon: '📖' },
           ] as { key: Tab; label: string; icon: string }[]).map((t) => (
             <button
@@ -155,8 +154,11 @@ export default function Dashboard() {
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 px-6 py-3 flex flex-wrap gap-x-8 gap-y-2">
               {[
                 ['Decision date', windData.decisionDate],
+                ['Delivery date', windData.deliveryDate],
                 ['Cutoff (UTC)', windData.decisionCutoff.replace('T', ' ').replace('Z', '')],
-                ['Delivery periods', String(windData.coverage.totalForecastPeriods)],
+                ['Resolution', `${windData.resolutionMinutes}-min`],
+                ['Expected periods', String(windData.coverage.expectedPeriods)],
+                ['Matched', `${windData.coverage.matchedPeriods} / ${windData.coverage.expectedPeriods}`],
                 ['Forecast runs used', String(windData.forecastVersionsUsed)],
                 ['Units', windData.units],
               ].map(([label, value]) => (
@@ -175,6 +177,65 @@ export default function Dashboard() {
 
             <SummaryStrip data={windData} />
             <MetricCards metrics={windData.metrics} coverage={windData.coverage} units={windData.units} />
+
+            {/* Key Findings for the Buyer */}
+            {windData.metrics.mae !== null && (() => {
+              const bias = windData.metrics.bias ?? 0
+              const worstBucket = windData.leadTimeBreakdown.reduce((a, b) =>
+                (b.mae ?? 0) > (a.mae ?? 0) ? b : a, windData.leadTimeBreakdown[0])
+              return (
+                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                  <h2 className="text-base font-semibold text-slate-800 mb-1">Key Findings for the Buyer</h2>
+                  <p className="text-xs text-slate-400 mb-4">
+                    Derived from WINDFOR forecasts vs FUELHH actuals · January 2026 analysis period
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className={`rounded-xl p-4 border ${bias > 0 ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Systematic Bias</p>
+                      <p className={`text-lg font-bold ${bias > 0 ? 'text-amber-700' : 'text-blue-700'}`}>
+                        {bias > 0 ? 'Over-forecast' : 'Under-forecast'}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {bias > 0
+                          ? `Wind was forecast ${Math.abs(bias).toLocaleString()} MW higher than actual on average. Traders systematically over-estimated available wind.`
+                          : `Wind was forecast ${Math.abs(bias).toLocaleString()} MW lower than actual on average. Traders under-estimated available wind.`}
+                      </p>
+                    </div>
+                    <div className="rounded-xl p-4 border bg-red-50 border-red-200">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Largest Error</p>
+                      <p className="text-lg font-bold text-red-700">
+                        {windData.worstAbsErrorMW !== null ? `${windData.worstAbsErrorMW.toLocaleString()} MW` : '—'}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Peak single-period absolute error
+                        {windData.worstAbsErrorTime ? ` at ${new Date(windData.worstAbsErrorTime).toUTCString().slice(5, 22)} UTC` : ''}.
+                        This period required the largest balancing adjustment.
+                      </p>
+                    </div>
+                    <div className="rounded-xl p-4 border bg-purple-50 border-purple-200">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Highest-Risk Lead Time</p>
+                      <p className="text-lg font-bold text-purple-700">{worstBucket?.label ?? '—'}</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        MAE {worstBucket?.mae?.toLocaleString() ?? '—'} MW in this window.
+                        Forecast accuracy deteriorates most at this horizon — apply wider procurement margins.
+                      </p>
+                    </div>
+                    <div className="rounded-xl p-4 border bg-emerald-50 border-emerald-200">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-1">Capacity Factor</p>
+                      <p className="text-lg font-bold text-emerald-700">
+                        {windData.capacityFactorPct !== null ? `${windData.capacityFactorPct.toFixed(1)}%` : '—'}
+                      </p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Of assumed 30 GW installed GB wind capacity.
+                        {(windData.capacityFactorPct ?? 0) < 30
+                          ? ' Low output day — wind contribution to supply was below average.'
+                          : ' Wind contributed meaningfully to supply on this day.'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
               <div className="lg:col-span-2"><ForecastChart periods={windData.periods} units={windData.units} /></div>
@@ -200,6 +261,7 @@ export default function Dashboard() {
                 ['Cutoff (UTC)', procData.decisionCutoff.replace('T', ' ').replace('Z', '')],
                 ['Matched periods', String(procData.procurementMetrics.matchedPeriods)],
                 ['Units', procData.units],
+                ['Dataset', 'WINDFOR + FUELHH (wind only)'],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-center gap-2 text-xs">
                   <span className="text-slate-400">{label}:</span>
@@ -237,7 +299,7 @@ export default function Dashboard() {
         )}
 
         <footer className="text-center text-xs text-slate-400 pb-4">
-          Elexon BMRS: WINDFOR · FUELHH · NDF · All times UTC · Wind capacity assumed 30 GW
+          Elexon BMRS: WINDFOR · FUELHH (WIND) · 30-min resolution · All times UTC · Wind capacity assumed 30 GW (not from Elexon)
         </footer>
       </main>
     </div>

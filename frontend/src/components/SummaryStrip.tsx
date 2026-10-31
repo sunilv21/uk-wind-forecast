@@ -7,7 +7,8 @@ interface Props {
 function fmtTime(iso: string | null): string {
   if (!iso) return '—'
   const d = new Date(iso)
-  return `${String(d.getUTCDate()).padStart(2, '0')} ${d.toLocaleString('en', { month: 'short' })} ${String(d.getUTCHours()).padStart(2, '0')}:00 UTC`
+  const month = d.toLocaleString('en', { month: 'short', timeZone: 'UTC' })
+  return `${String(d.getUTCDate()).padStart(2, '0')} ${month} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`
 }
 
 interface HighlightProps {

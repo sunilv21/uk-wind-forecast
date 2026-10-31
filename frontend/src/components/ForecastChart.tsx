@@ -25,12 +25,13 @@ interface ChartRow {
 
 function formatTick(isoStr: string): string {
   const d = new Date(isoStr)
-  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')} ${String(d.getUTCHours()).padStart(2, '0')}:00`
+  return `${String(d.getUTCDate()).padStart(2, '0')}/${String(d.getUTCMonth() + 1).padStart(2, '0')} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
 }
 
 function formatFull(isoStr: string): string {
   const d = new Date(isoStr)
-  return `${d.getUTCDate()} Jan ${String(d.getUTCHours()).padStart(2, '0')}:00 UTC`
+  const month = d.toLocaleString('en', { month: 'short', timeZone: 'UTC' })
+  return `${d.getUTCDate()} ${month} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')} UTC`
 }
 
 interface TooltipProps {
@@ -81,7 +82,7 @@ export default function ForecastChart({ periods, units }: Props) {
       <div className="flex items-start justify-between mb-6">
         <div>
           <h2 className="text-base font-semibold text-slate-800">Forecast vs Actual Generation</h2>
-          <p className="text-xs text-slate-400 mt-0.5">Hourly wind generation · {units} · UTC</p>
+          <p className="text-xs text-slate-400 mt-0.5">30-min wind generation · {units} · UTC · gaps = missing data</p>
         </div>
         <div className="flex items-center gap-4 text-xs text-slate-500">
           <div className="flex items-center gap-1.5">

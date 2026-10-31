@@ -37,16 +37,9 @@ function CustomTooltip({ active, payload, label }: TooltipProps) {
 }
 
 export default function TrendChart({ defaultCutoff }: Props) {
-  const [startDate, setStartDate] = useState(() => {
-    const d = new Date()
-    d.setUTCDate(d.getUTCDate() - 7)
-    return d.toISOString().slice(0, 10)
-  })
-  const [endDate, setEndDate] = useState(() => {
-    const d = new Date()
-    d.setUTCDate(d.getUTCDate() - 1)
-    return d.toISOString().slice(0, 10)
-  })
+  // Default to January 2026 — the assignment's required analysis period
+  const [startDate, setStartDate] = useState('2026-01-01')
+  const [endDate, setEndDate] = useState('2026-01-31')
   const [metric, setMetric] = useState<Metric>('mae')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

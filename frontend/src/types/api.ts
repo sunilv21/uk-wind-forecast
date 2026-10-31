@@ -7,6 +7,7 @@ export interface PeriodResult {
   absoluteError: number | null
   percentageError: number | null
   leadHours: number | null
+  status: 'matched' | 'missing_forecast' | 'missing_actual' | 'missing_both'
 }
 
 export interface MetricsResult {
@@ -18,9 +19,11 @@ export interface MetricsResult {
 
 export interface CoverageResult {
   totalForecastPeriods: number
+  expectedPeriods: number      // 48 for a full delivery day at 30-min resolution
   matchedPeriods: number
   missingActuals: number
   missingForecasts: number
+  missingBoth: number          // periods with neither forecast nor actual
   coveragePct: number | null
 }
 
@@ -37,8 +40,9 @@ export interface LeadTimeBucket {
 export interface AnalysisResponse {
   decisionDate: string
   decisionCutoff: string
+  deliveryDate: string         // decision_date + 1 day
+  resolutionMinutes: number    // 30 — half-hourly
   units: string
-  granularity: string
   forecastVersionsUsed: number
   peakActualMW: number | null
   peakActualTime: string | null
@@ -54,15 +58,11 @@ export interface AnalysisResponse {
 export interface ProcurementPeriod {
   deliveryTime: string
   leadHours: number | null
-  demandForecast: number | null
-  actualDemand: number | null
-  windForecast: number | null
-  actualWind: number | null
-  residualForecast: number | null
-  residualActual: number | null
-  procurementGapError: number | null
-  procurementGapAbs: number | null
-  procurementGapPct: number | null
+  windForecast: number | null   // WINDFOR — expected wind at decision cutoff
+  actualWind: number | null     // FUELHH (WIND) — measured output
+  windError: number | null      // windForecast − actualWind; positive = shortfall exposure
+  windErrorAbs: number | null
+  windErrorPct: number | null
 }
 
 export interface ProcurementMetrics {
@@ -71,12 +71,15 @@ export interface ProcurementMetrics {
   bias: number | null
   wape: number | null
   matchedPeriods: number
+  overforecastMWh: number | null    // sum of max(0, windError) × 0.5 h
+  underforecastMWh: number | null   // sum of max(0, -windError) × 0.5 h
 }
 
 export interface ProcurementResponse {
   decisionDate: string
   decisionCutoff: string
   units: string
+  methodology: string
   procurementMetrics: ProcurementMetrics
   windMetrics: MetricsResult
   periods: ProcurementPeriod[]

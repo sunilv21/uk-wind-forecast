@@ -2,6 +2,7 @@ import logging
 import asyncio
 import hashlib
 import json
+import math
 import time
 from datetime import datetime, timezone
 from app.config import ELEXON_BASE_URL, REQUEST_TIMEOUT, MAX_RETRIES, CACHE_TTL_SECONDS, CACHE_TTL_HISTORICAL
@@ -59,20 +60,29 @@ async def _get(url: str, params: dict, to_dt: datetime) -> list:
 
     last_exc: Exception | None = None
     for attempt in range(1, MAX_RETRIES + 1):
+        t0 = time.perf_counter()
         try:
             async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT) as client:
                 r = await client.get(url, params=params)
+            elapsed_ms = round((time.perf_counter() - t0) * 1000, 1)
             r.raise_for_status()
             data = r.json()
             ttl = _ttl_for(to_dt)
             _cache_set(key, data, ttl)
-            logger.debug("Fetched %s: %d records (ttl=%ds)", url.split("/")[-1], len(data), ttl)
+            logger.info("Elexon %s → %d records in %sms (ttl=%ds)",
+                        url.split("/")[-1], len(data), elapsed_ms, ttl)
             return data
         except (httpx.TimeoutException, httpx.NetworkError, httpx.HTTPStatusError) as exc:
             last_exc = exc
-            if isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code < 500:
-                raise  # 4xx — no point retrying
-            wait = 2 ** (attempt - 1)
+            if isinstance(exc, httpx.HTTPStatusError):
+                if exc.response.status_code == 429:
+                    wait = 10 * attempt  # back off more on rate-limit
+                elif exc.response.status_code < 500:
+                    raise  # 4xx client error — no point retrying
+                else:
+                    wait = 2 ** (attempt - 1)
+            else:
+                wait = 2 ** (attempt - 1)
             logger.warning("Elexon attempt %d/%d failed (%s), retrying in %ds", attempt, MAX_RETRIES, exc, wait)
             if attempt < MAX_RETRIES:
                 await asyncio.sleep(wait)
@@ -81,67 +91,81 @@ async def _get(url: str, params: dict, to_dt: datetime) -> list:
 
 
 async def fetch_windfor(from_dt: datetime, to_dt: datetime) -> list[dict]:
+    """
+    Fetch WINDFOR wind generation forecasts.
+    Filtered by publishDateTime window: from_dt to to_dt.
+    Returns records with startTime (delivery), publishTime, generation (MW).
+    Non-finite generation values are rejected and counted.
+    """
     raw = await _get(f"{ELEXON_BASE_URL}/datasets/WINDFOR/stream", _time_params(from_dt, to_dt), to_dt)
     records = []
+    rejected = 0
     for item in raw:
         try:
+            gen = float(item["generation"])
+            if not math.isfinite(gen):
+                rejected += 1
+                continue
             records.append({
                 "startTime": _parse_dt(item["startTime"]),
                 "publishTime": _parse_dt(item["publishTime"]),
-                "generation": float(item["generation"]),
+                "generation": gen,
             })
         except (KeyError, ValueError, TypeError):
+            rejected += 1
             continue
+    if rejected:
+        logger.warning("WINDFOR: rejected %d malformed/non-finite records", rejected)
+    logger.debug("WINDFOR: %d valid records returned", len(records))
     return records
 
 
 async def fetch_fuelhh_wind(from_dt: datetime, to_dt: datetime) -> list[dict]:
+    """
+    Fetch FUELHH actual wind generation, fuelType=WIND only.
+    Filtered by publishDateTime window: from_dt to to_dt.
+
+    Caller should use a window wide enough to capture late revisions
+    (e.g. delivery_start to delivery_end + 12h) and then filter by
+    startTime in Python.
+
+    Returns de-duplicated records with startTime, generation (MW), and
+    publishTime (revision metadata).  Duplicate startTimes are resolved
+    deterministically: the record with the latest publishTime is kept.
+    Non-finite and non-WIND records are rejected.
+    """
     params = {**_time_params(from_dt, to_dt), "fuelType": "WIND"}
     raw = await _get(f"{ELEXON_BASE_URL}/datasets/FUELHH/stream", params, to_dt)
-    records = []
+    # best: startTime → {startTime, generation, publishTime}
+    best: dict[datetime, dict] = {}
+    rejected = 0
     for item in raw:
         try:
             if item.get("fuelType", "").upper() != "WIND":
                 continue
-            records.append({
-                "startTime": _parse_dt(item["startTime"]),
-                "generation": float(item["generation"]),
-            })
-        except (KeyError, ValueError, TypeError):
-            continue
-    return records
-
-
-async def fetch_fuelhh_demand(from_dt: datetime, to_dt: datetime) -> list[dict]:
-    """Total actual demand = sum of all fuel types per half-hour period."""
-    raw = await _get(f"{ELEXON_BASE_URL}/datasets/FUELHH/stream", _time_params(from_dt, to_dt), to_dt)
-    totals: dict[datetime, float] = {}
-    for item in raw:
-        try:
-            t = _parse_dt(item["startTime"])
-            totals[t] = totals.get(t, 0.0) + float(item["generation"])
-        except (KeyError, ValueError, TypeError):
-            continue
-    return [{"startTime": t, "demand": v} for t, v in sorted(totals.items())]
-
-
-async def fetch_ndf(from_dt: datetime, to_dt: datetime) -> list[dict]:
-    """Half-hourly national demand forecast (NDF), boundary=N only."""
-    raw = await _get(f"{ELEXON_BASE_URL}/datasets/NDF/stream", _time_params(from_dt, to_dt), to_dt)
-    records = []
-    for item in raw:
-        try:
-            if item.get("boundary", "N").upper() != "N":
+            gen = float(item["generation"])
+            if not math.isfinite(gen):
+                rejected += 1
                 continue
-            records.append({
-                "startTime": _parse_dt(item["startTime"]),
-                "publishTime": _parse_dt(item["publishTime"]),
-                "demand": float(item["demand"]),
-            })
+            st = _parse_dt(item["startTime"])
+            pub = _parse_dt(item["publishTime"]) if "publishTime" in item else None
+            if st not in best:
+                best[st] = {"startTime": st, "generation": gen, "publishTime": pub}
+            else:
+                existing_pub = best[st]["publishTime"]
+                # Latest publishTime wins — deterministic revision selection
+                if pub is not None and (existing_pub is None or pub > existing_pub):
+                    best[st] = {"startTime": st, "generation": gen, "publishTime": pub}
         except (KeyError, ValueError, TypeError):
+            rejected += 1
             continue
-    return records
+    if rejected:
+        logger.warning("FUELHH: rejected %d malformed/non-finite records", rejected)
+    duplicates = len(raw) - len(best) - rejected
+    if duplicates > 0:
+        logger.info("FUELHH: resolved %d duplicate startTime records (kept latest publishTime)", duplicates)
+    return list(best.values())
 
 
-# Backward-compat alias
+# Backward-compat alias used by routes.py
 fetch_fuelhh = fetch_fuelhh_wind

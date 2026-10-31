@@ -7,7 +7,7 @@ interface Props {
 }
 
 function exportCSV(periods: PeriodResult[], units: string) {
-  const header = `Delivery Time (UTC),Published At (UTC),Forecast (${units}),Actual (${units}),Error (${units}),|Error| (${units}),Error %,Lead Hours`
+  const header = `Delivery Time (UTC),Published At (UTC),Forecast (${units}),Actual (${units}),Error (${units}),|Error| (${units}),Error %,Lead Hours,Status`
   const rows = periods.map((p) =>
     [
       p.deliveryTime,
@@ -18,6 +18,7 @@ function exportCSV(periods: PeriodResult[], units: string) {
       p.absoluteError ?? '',
       p.percentageError ?? '',
       p.leadHours ?? '',
+      p.status,
     ].join(',')
   )
   const csv = [header, ...rows].join('\n')
@@ -77,7 +78,9 @@ export default function PeriodTable({ periods, units }: Props) {
     )
   }
 
-  const matched = periods.filter((p) => p.actualGeneration !== null && p.forecastGeneration !== null).length
+  const matched = periods.filter((p) => p.status === 'matched').length
+  const missingActuals = periods.filter((p) => p.status === 'missing_actual').length
+  const missingForecasts = periods.filter((p) => p.status === 'missing_forecast').length
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
@@ -85,7 +88,7 @@ export default function PeriodTable({ periods, units }: Props) {
         <div>
           <h2 className="text-base font-semibold text-slate-800">Delivery Periods</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            {periods.length} forecast periods · {matched} with actuals · click column headers to sort
+            {periods.length} of 48 expected periods · {matched} matched · {missingActuals} missing actuals · {missingForecasts} missing forecasts · click column headers to sort
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -108,6 +111,7 @@ export default function PeriodTable({ periods, units }: Props) {
           <thead className="bg-slate-50 border-b border-slate-100">
             <tr>
               <Th label="Delivery Time" k="deliveryTime" />
+              <Th label="Status" />
               <Th label="Published At" />
               <Th label="Lead (h)" />
               <Th label={`Forecast (${units})`} k="forecastGeneration" />
@@ -124,10 +128,21 @@ export default function PeriodTable({ periods, units }: Props) {
               return (
                 <tr
                   key={p.deliveryTime}
-                  className={`hover:bg-slate-50 transition-colors ${!hasActual ? 'opacity-50' : ''}`}
+                  className={`hover:bg-slate-50 transition-colors ${p.status === 'missing_both' ? 'opacity-40' : p.status !== 'matched' ? 'opacity-70' : ''}`}
                 >
                   <td className="px-4 py-3 font-mono text-xs text-slate-700 whitespace-nowrap">
                     {fmtTime(p.deliveryTime)}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {p.status === 'matched' ? (
+                      <span className="text-xs bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">matched</span>
+                    ) : p.status === 'missing_actual' ? (
+                      <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">no actual</span>
+                    ) : p.status === 'missing_forecast' ? (
+                      <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded-full">no forecast</span>
+                    ) : (
+                      <span className="text-xs bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded-full">missing both</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 font-mono text-xs text-slate-400 whitespace-nowrap">
                     {fmtTime(p.forecastPublishTime)}
