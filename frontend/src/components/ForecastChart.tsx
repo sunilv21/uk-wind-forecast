@@ -115,22 +115,22 @@ export default function ForecastChart({ periods, units }: Props) {
           <Tooltip content={<CustomTooltip />} />
           <Line
             type="monotone"
-            dataKey="forecast"
-            stroke="#3b82f6"
-            strokeWidth={2}
+            dataKey="actual"
+            stroke="#10b981"
+            strokeWidth={2.5}
             dot={false}
-            name="Forecast"
+            name="Actual"
             connectNulls={false}
           />
           <Line
             type="monotone"
-            dataKey="actual"
-            stroke="#10b981"
+            dataKey="forecast"
+            stroke="#3b82f6"
             strokeWidth={2}
+            strokeDasharray="6 3"
             dot={false}
-            name="Actual"
+            name="Forecast"
             connectNulls={false}
-            strokeDasharray="0"
           />
         </LineChart>
       </ResponsiveContainer>

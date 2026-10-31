@@ -255,10 +255,10 @@ export default function ProcurementView({ data }: Props) {
               tickLine={false} axisLine={false} width={52} domain={[0, 'auto']} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: 12, color: '#64748b', paddingTop: 8 }} />
-            <Line yAxisId="gen" type="monotone" dataKey="Forecast wind"
-              stroke="#f97316" strokeWidth={2} dot={false} connectNulls={false} />
             <Line yAxisId="gen" type="monotone" dataKey="Actual wind"
               stroke="#64748b" strokeWidth={2} dot={false} strokeDasharray="5 3" connectNulls={false} />
+            <Line yAxisId="gen" type="monotone" dataKey="Forecast wind"
+              stroke="#f97316" strokeWidth={2.5} dot={false} connectNulls={false} />
             <Bar yAxisId="err" dataKey="Shortfall exposure" fill="#60a5fa" radius={[3, 3, 0, 0]} fillOpacity={0.8} />
             <Bar yAxisId="err" dataKey="Surplus exposure" fill="#fbbf24" radius={[3, 3, 0, 0]} fillOpacity={0.8} />
           </ComposedChart>
