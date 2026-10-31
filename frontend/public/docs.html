@@ -1,0 +1,1450 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+
+<title>UK Wind & Procurement Docs</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+/* ── Design tokens ── */
+:root {
+  /* Layout: sidebar + scrollable main, sticky nav */
+  --bg:        #f8fafc;
+  --surface:   #ffffff;
+  --border:    #e2e8f0;
+  --fg:        #0f172a;
+  --fg-2:      #475569;
+  --fg-3:      #94a3b8;
+  --accent:    #2563eb;
+  --accent-bg: #eff6ff;
+  --accent-fg: #1d4ed8;
+  --green:     #059669;
+  --green-bg:  #ecfdf5;
+  --amber:     #d97706;
+  --amber-bg:  #fffbeb;
+  --red:       #dc2626;
+  --red-bg:    #fef2f2;
+  --blue:      #0284c7;
+  --code-bg:   #f1f5f9;
+  --code-fg:   #1e293b;
+  --sidebar-w: 260px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg:        #0f172a;
+    --surface:   #1e293b;
+    --border:    #334155;
+    --fg:        #f1f5f9;
+    --fg-2:      #94a3b8;
+    --fg-3:      #475569;
+    --accent:    #3b82f6;
+    --accent-bg: #1e3a5f;
+    --accent-fg: #93c5fd;
+    --green:     #34d399;
+    --green-bg:  #064e3b;
+    --amber:     #fbbf24;
+    --amber-bg:  #451a03;
+    --red:       #f87171;
+    --red-bg:    #450a0a;
+    --blue:      #38bdf8;
+    --code-bg:   #0f172a;
+    --code-fg:   #e2e8f0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg:#0f172a;--surface:#1e293b;--border:#334155;--fg:#f1f5f9;--fg-2:#94a3b8;--fg-3:#475569;
+  --accent:#3b82f6;--accent-bg:#1e3a5f;--accent-fg:#93c5fd;--green:#34d399;--green-bg:#064e3b;
+  --amber:#fbbf24;--amber-bg:#451a03;--red:#f87171;--red-bg:#450a0a;--blue:#38bdf8;
+  --code-bg:#0f172a;--code-fg:#e2e8f0;color-scheme:dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  font-size: 15px;
+  line-height: 1.7;
+  display: flex;
+  min-height: 100%;
+  padding-left: max(0px, env(safe-area-inset-left, 0px));
+  padding-right: max(0px, env(safe-area-inset-right, 0px));
+}
+
+/* ── Sidebar ── */
+#sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  max-width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-icon {
+  width: 34px; height: 34px;
+  background: var(--accent);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 10px;
+}
+.sidebar-logo .logo-icon svg { width: 18px; height: 18px; }
+.sidebar-logo h1 { font-size: 13px; font-weight: 700; color: var(--fg); line-height: 1.3; }
+.sidebar-logo p { font-size: 11px; color: var(--fg-3); margin-top: 2px; }
+nav { padding: 12px 0 24px; }
+.nav-group { margin-bottom: 4px; }
+.nav-group-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--fg-3); padding: 8px 20px 4px;
+}
+nav a {
+  display: block; padding: 5px 20px;
+  font-size: 13px; color: var(--fg-2); text-decoration: none;
+  border-radius: 0; transition: color .15s;
+  border-left: 2px solid transparent;
+}
+nav a:hover { color: var(--fg); }
+nav a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+
+/* ── Main ── */
+#main {
+  flex: 1; min-width: 0;
+  padding: 40px max(24px, env(safe-area-inset-right, 24px)) 80px max(40px, env(safe-area-inset-left, 40px));
+  max-width: 860px;
+}
+
+/* ── Section headings ── */
+.doc-section { scroll-margin-top: 24px; }
+h2 {
+  font-size: 22px; font-weight: 700; color: var(--fg);
+  margin: 48px 0 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  text-wrap: balance;
+}
+h2:first-of-type { margin-top: 0; border-top: none; }
+h3 { font-size: 16px; font-weight: 600; color: var(--fg); margin: 28px 0 8px; text-wrap: balance; }
+h4 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--fg-3); margin: 20px 0 6px; }
+p { color: var(--fg-2); margin-bottom: 12px; max-width: 68ch; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Hero ── */
+.hero {
+  background: linear-gradient(135deg, var(--accent) 0%, #1d4ed8 100%);
+  border-radius: 16px; padding: 36px 32px; margin-bottom: 40px; color: #fff;
+}
+.hero h1 { font-size: 26px; font-weight: 800; margin-bottom: 8px; }
+.hero p { color: rgba(255,255,255,.8); margin: 0; max-width: 52ch; }
+.hero-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.badge {
+  background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2);
+  border-radius: 20px; padding: 4px 12px; font-size: 11px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; color: rgba(255,255,255,.9);
+}
+
+/* ── Code ── */
+pre {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 16px 18px; overflow-x: auto; margin: 12px 0 20px;
+  font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.7;
+  color: var(--code-fg);
+}
+code {
+  font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  background: var(--code-bg); color: var(--accent);
+  padding: 2px 6px; border-radius: 4px;
+}
+pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+.kw  { color: #7c3aed; } /* keyword */
+.st  { color: #059669; } /* string */
+.cm  { color: var(--fg-3); font-style: italic; } /* comment */
+.nb  { color: #0284c7; } /* number / built-in */
+.fn  { color: #d97706; } /* function */
+
+/* ── Tables ── */
+.table-wrap { overflow-x: auto; margin: 12px 0 24px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: var(--code-bg); padding: 9px 14px; text-align: left;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--fg-3); border-bottom: 2px solid var(--border);
+}
+td { padding: 9px 14px; border-bottom: 1px solid var(--border); color: var(--fg-2); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--code-bg); }
+td code { font-size: 11.5px; }
+
+/* ── Callouts ── */
+.callout {
+  border-radius: 10px; padding: 14px 16px; margin: 16px 0; display: flex; gap: 12px;
+  font-size: 13.5px;
+}
+.callout-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.callout p { margin: 0; }
+.callout.info  { background: var(--accent-bg); border-left: 3px solid var(--accent); }
+.callout.warn  { background: var(--amber-bg);  border-left: 3px solid var(--amber);  }
+.callout.tip   { background: var(--green-bg);  border-left: 3px solid var(--green);  }
+.callout.info  p { color: var(--accent-fg); }
+.callout.warn  p { color: var(--amber); }
+.callout.tip   p { color: var(--green); }
+
+/* ── Formula cards ── */
+.formula-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+.formula-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 16px; border-top: 3px solid var(--accent);
+}
+.formula-card h4 { margin: 0 0 6px; font-size: 11px; }
+.formula-card .formula { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--fg); }
+.formula-card p { font-size: 12px; margin: 6px 0 0; }
+
+/* ── Endpoint cards ── */
+.endpoint {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  margin-bottom: 20px; overflow: hidden;
+}
+.endpoint-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; background: var(--code-bg); border-bottom: 1px solid var(--border);
+}
+.method {
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+  padding: 3px 8px; border-radius: 5px; background: var(--green-bg); color: var(--green);
+}
+.path { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--fg); }
+.endpoint-body { padding: 14px 16px; }
+.endpoint-body p { font-size: 13px; margin-bottom: 10px; }
+
+/* ── Arch diagram ── */
+.arch {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 24px; margin: 16px 0 24px;
+}
+.arch-row { display: flex; align-items: center; gap: 0; flex-wrap: wrap; }
+.arch-box {
+  background: var(--accent-bg); border: 1.5px solid var(--accent);
+  border-radius: 10px; padding: 10px 14px; text-align: center; flex: 1; min-width: 110px;
+}
+.arch-box .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--accent-fg); }
+.arch-box .sub   { font-size: 11px; color: var(--fg-3); margin-top: 2px; }
+.arch-arrow { font-size: 18px; color: var(--fg-3); padding: 0 6px; flex-shrink: 0; }
+.arch-row.data { margin-top: 16px; justify-content: center; }
+.arch-row.data .arch-box { background: var(--green-bg); border-color: var(--green); max-width: 150px; }
+.arch-row.data .arch-box .label { color: var(--green); }
+.arch-connector { text-align: center; font-size: 20px; color: var(--fg-3); margin: 4px 0; }
+
+/* ── Flow steps ── */
+.steps { counter-reset: step; list-style: none; margin: 16px 0 24px; display: flex; flex-direction: column; gap: 10px; }
+.steps li {
+  counter-increment: step; display: flex; gap: 14px; align-items: flex-start;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+}
+.steps li::before {
+  content: counter(step); width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 12px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+.steps li span { font-size: 13.5px; color: var(--fg-2); }
+
+/* ── Metrics grid ── */
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+.metric-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+}
+.metric-card .metric-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--fg-3); margin-bottom: 4px; }
+.metric-card .metric-formula { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--fg); margin-bottom: 4px; }
+.metric-card p { font-size: 12px; margin: 0; }
+
+/* ── TOC mobile toggle ── */
+#toc-toggle { display: none; }
+#mobile-bar {
+  display: none; position: sticky; top: 0; z-index: 20;
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 10px max(16px, env(safe-area-inset-left, 0px));
+  align-items: center; justify-content: space-between;
+}
+#mobile-bar h2 { font-size: 14px; font-weight: 700; margin: 0; border: none; padding: 0; }
+#toc-btn {
+  background: var(--code-bg); border: 1px solid var(--border); border-radius: 7px;
+  padding: 6px 12px; font-size: 12px; font-weight: 600; color: var(--fg); cursor: pointer;
+}
+
+@media (max-width: 720px) {
+  body { display: block; }
+  #sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 30; transform: translateX(-100%); transition: transform .25s; width: 80vw; max-width: 300px; height: 100vh; }
+  #sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,.15); }
+  #mobile-bar { display: flex; }
+  #main { padding: 20px max(16px, env(safe-area-inset-right, 16px)) 60px max(16px, env(safe-area-inset-left, 16px)); }
+  #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 29; }
+  #overlay.active { display: block; }
+  h2 { font-size: 19px; }
+}
+</style>
+
+<div id="overlay" onclick="closeSidebar()"></div>
+
+<div id="mobile-bar">
+  <h2>Documentation</h2>
+  <button id="toc-btn" onclick="toggleSidebar()">☰ Contents</button>
+</div>
+
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg fill="none" stroke="#fff" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    </div>
+    <h1>UK Wind & Procurement<br>Dashboard</h1>
+    <p>Complete Documentation · v1.0</p>
+  </div>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-label">Overview</div>
+      <a href="#overview" onclick="closeSidebar()">Introduction</a>
+      <a href="#architecture" onclick="closeSidebar()">Architecture</a>
+      <a href="#data-flow" onclick="closeSidebar()">Data Flow</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Data Sources</div>
+      <a href="#elexon" onclick="closeSidebar()">Elexon BMRS</a>
+      <a href="#windfor" onclick="closeSidebar()">WINDFOR</a>
+      <a href="#fuelhh" onclick="closeSidebar()">FUELHH</a>
+      <a href="#ndf" onclick="closeSidebar()">NDF</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Core Concepts</div>
+      <a href="#forecast-selection" onclick="closeSidebar()">Forecast Selection</a>
+      <a href="#granularity" onclick="closeSidebar()">Granularity Mismatch</a>
+      <a href="#metrics" onclick="closeSidebar()">Accuracy Metrics</a>
+      <a href="#procurement" onclick="closeSidebar()">Procurement Gap</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Backend</div>
+      <a href="#api" onclick="closeSidebar()">API Reference</a>
+      <a href="#services" onclick="closeSidebar()">Services</a>
+      <a href="#caching" onclick="closeSidebar()">Caching & Retry</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Frontend</div>
+      <a href="#ui" onclick="closeSidebar()">Dashboard UI</a>
+      <a href="#components" onclick="closeSidebar()">Components</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Deployment</div>
+      <a href="#local-dev" onclick="closeSidebar()">Local Development</a>
+      <a href="#docker" onclick="closeSidebar()">Docker</a>
+      <a href="#env-vars" onclick="closeSidebar()">Configuration</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Roadmap</div>
+      <a href="#scope" onclick="closeSidebar()">Future Scope</a>
+      <a href="#scope-business" onclick="closeSidebar()">Business Gaps</a>
+      <a href="#scope-platforms" onclick="closeSidebar()">Other Platforms</a>
+      <a href="#scope-technical" onclick="closeSidebar()">Technical Gaps</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Reference</div>
+      <a href="#tools" onclick="closeSidebar()">Tools Used</a>
+      <a href="#glossary" onclick="closeSidebar()">Glossary</a>
+    </div>
+  </nav>
+</aside>
+
+<main id="main">
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>UK Wind & Procurement Dashboard</h1>
+    <p>Full-stack application for analysing wind generation forecast accuracy and day-ahead procurement gap — built on live Elexon BMRS data.</p>
+    <div class="hero-badges">
+      <span class="badge">FastAPI</span>
+      <span class="badge">React 18</span>
+      <span class="badge">TypeScript</span>
+      <span class="badge">Elexon BMRS</span>
+      <span class="badge">Recharts</span>
+      <span class="badge">Tailwind CSS</span>
+      <span class="badge">Docker</span>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section class="doc-section" id="overview">
+    <h2>Introduction</h2>
+    <p>This dashboard helps electricity market participants understand two related questions:</p>
+    <ol style="margin: 0 0 16px 20px; color: var(--fg-2); font-size: 14px; line-height: 2;">
+      <li><strong style="color:var(--fg)">How accurate are the published wind generation forecasts?</strong> — Measured as MAE, RMSE, bias and WAPE by lead-time bucket.</li>
+      <li><strong style="color:var(--fg)">How much power did we still need to procure after our day-ahead decision?</strong> — The "procurement gap": the difference between what the forecasts implied we needed to buy versus what we actually needed.</li>
+    </ol>
+    <p>All data is pulled live from <strong>Elexon BMRS</strong> (the British National Grid's official settlement data service) at the moment you click Fetch Data. No data is stored server-side between requests beyond a short in-memory cache.</p>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <p><strong>No API key required.</strong> Elexon BMRS is a public API. The app works immediately after startup with no registration or credentials.</p>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURE -->
+  <section class="doc-section" id="architecture">
+    <h2>Architecture</h2>
+    <p>The project is a three-layer stack: a React SPA, a FastAPI backend, and the Elexon BMRS external API.</p>
+
+    <div class="arch">
+      <div class="arch-row">
+        <div class="arch-box">
+          <div class="label">Browser</div>
+          <div class="sub">React + Recharts<br>Tailwind CSS</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">
+          <div class="label">FastAPI Backend</div>
+          <div class="sub">Python 3.11<br>uvicorn · 2 workers</div>
+        </div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">
+          <div class="label">Elexon BMRS</div>
+          <div class="sub">Public API<br>No auth required</div>
+        </div>
+      </div>
+      <div class="arch-connector">↕</div>
+      <div class="arch-row data">
+        <div class="arch-box">
+          <div class="label">WINDFOR</div>
+          <div class="sub">Wind forecasts</div>
+        </div>
+        <div class="arch-arrow">·</div>
+        <div class="arch-box">
+          <div class="label">FUELHH</div>
+          <div class="sub">Actuals</div>
+        </div>
+        <div class="arch-arrow">·</div>
+        <div class="arch-box">
+          <div class="label">NDF</div>
+          <div class="sub">Demand forecast</div>
+        </div>
+      </div>
+    </div>
+
+    <h3>File Structure</h3>
+    <pre><code>UK wind forecast/
+├── backend/
+│   ├── app/
+│   │   ├── main.py              <span class="cm"># FastAPI app, middleware, logging</span>
+│   │   ├── config.py            <span class="cm"># env-var settings</span>
+│   │   ├── schemas.py           <span class="cm"># Pydantic response models</span>
+│   │   ├── api/
+│   │   │   └── routes.py        <span class="cm"># 4 endpoints</span>
+│   │   └── services/
+│   │       ├── elexon_client.py <span class="cm"># HTTP fetching, cache, retry</span>
+│   │       ├── forecast_selection.py
+│   │       ├── metrics.py
+│   │       └── procurement.py
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── .dockerignore
+├── frontend/
+│   ├── src/
+│   │   ├── main.tsx
+│   │   ├── App.tsx              <span class="cm"># ErrorBoundary wrapper</span>
+│   │   ├── api/client.ts        <span class="cm"># fetch helpers</span>
+│   │   ├── types/api.ts         <span class="cm"># TypeScript interfaces</span>
+│   │   ├── pages/Dashboard.tsx  <span class="cm"># main page, tab state</span>
+│   │   └── components/
+│   │       ├── DateControls.tsx
+│   │       ├── MetricCards.tsx
+│   │       ├── ForecastChart.tsx
+│   │       ├── ErrorChart.tsx
+│   │       ├── ErrorHistogram.tsx
+│   │       ├── LeadTimeChart.tsx
+│   │       ├── TrendChart.tsx
+│   │       ├── PeriodTable.tsx
+│   │       ├── SummaryStrip.tsx
+│   │       ├── ProcurementView.tsx
+│   │       └── ErrorBoundary.tsx
+│   ├── nginx.conf
+│   ├── Dockerfile
+│   └── .dockerignore
+├── docker-compose.yml
+└── .env.example</code></pre>
+  </section>
+
+  <!-- DATA FLOW -->
+  <section class="doc-section" id="data-flow">
+    <h2>Data Flow</h2>
+    <p>Every request follows the same pipeline from browser click to rendered chart:</p>
+    <ol class="steps">
+      <li><span>User selects a <strong>decision date</strong> and <strong>cutoff time</strong> (e.g. 28 Oct 2026, 10:00 UTC) and clicks Fetch Data.</span></li>
+      <li><span>The React frontend calls <code>GET /api/analysis</code> or <code>/api/procurement</code>.</span></li>
+      <li><span>The FastAPI backend fetches 3 days of WINDFOR forecasts published <em>up to the cutoff</em> from Elexon. Results are cached in memory (5 min for recent data, 1 hr for historical).</span></li>
+      <li><span>The <code>select_latest_forecasts()</code> function picks, for each delivery hour, the most recently published forecast whose <code>publishTime ≤ cutoff</code>. Only periods <em>after</em> the cutoff are kept (forward-looking).</span></li>
+      <li><span>FUELHH actuals are fetched for the delivery window and averaged from half-hourly → hourly to match the forecast granularity.</span></li>
+      <li><span>Errors, metrics, lead-time buckets, and coverage are computed. For procurement, NDF demand forecasts and actual demand (FUELHH all-fuels sum) are added to the pipeline.</span></li>
+      <li><span>A typed JSON response is returned and rendered into charts, metric cards, and tables.</span></li>
+    </ol>
+  </section>
+
+  <!-- ELEXON -->
+  <section class="doc-section" id="elexon">
+    <h2>Elexon BMRS</h2>
+    <p>Base URL: <code>https://data.elexon.co.uk/bmrs/api/v1</code></p>
+    <p>All three datasets use the <code>/stream</code> endpoint variant, which returns a flat JSON array rather than a paginated envelope. Requests use two query parameters to filter by publish time:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Parameter</th><th>Format</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><code>publishDateTimeFrom</code></td><td>ISO 8601 UTC</td><td><code>2026-10-25T10:00:00Z</code></td></tr>
+          <tr><td><code>publishDateTimeTo</code></td><td>ISO 8601 UTC</td><td><code>2026-10-28T10:00:00Z</code></td></tr>
+          <tr><td><code>format</code></td><td>string</td><td><code>json</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <p>The backend always requests the 3 days <em>before</em> the cutoff for forecasts. This is because WINDFOR publishes forecasts up to 14 days ahead — the 3-day window captures all relevant forecast vintages for same-day and next-day delivery.</p>
+    </div>
+  </section>
+
+  <!-- WINDFOR -->
+  <section class="doc-section" id="windfor">
+    <h2>WINDFOR</h2>
+    <p>Wind generation forecast dataset. Published approximately every 30 minutes by National Grid ESO and distributed via Elexon BMRS.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>startTime</code></td><td>ISO datetime</td><td>Start of the delivery hour (UTC)</td></tr>
+          <tr><td><code>publishTime</code></td><td>ISO datetime</td><td>When this forecast version was published</td></tr>
+          <tr><td><code>generation</code></td><td>float</td><td>Forecast wind generation in MW</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Granularity: <strong>hourly</strong>. Multiple <code>publishTime</code> values exist per <code>startTime</code> — each is a different forecast vintage (run). The app selects the latest vintage published before the decision cutoff.</p>
+  </section>
+
+  <!-- FUELHH -->
+  <section class="doc-section" id="fuelhh">
+    <h2>FUELHH</h2>
+    <p>Half-hourly actual generation by fuel type. Used in two ways:</p>
+    <ul style="margin: 8px 0 16px 20px; color: var(--fg-2); font-size: 14px; line-height: 2.2;">
+      <li><strong>Wind actuals:</strong> filtered to <code>fuelType=WIND</code></li>
+      <li><strong>Total demand actuals:</strong> all fuel types summed per period. Since the grid is always in balance, <em>total generation = total consumption</em>.</li>
+    </ul>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>startTime</code></td><td>ISO datetime</td><td>Start of the 30-min settlement period</td></tr>
+          <tr><td><code>fuelType</code></td><td>string</td><td>e.g. WIND, GAS, NUCLEAR, COAL, SOLAR…</td></tr>
+          <tr><td><code>generation</code></td><td>float</td><td>Actual generation in MW</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Granularity: <strong>half-hourly</strong>. Two 30-min periods are averaged to produce one hourly bucket matching WINDFOR.</p>
+  </section>
+
+  <!-- NDF -->
+  <section class="doc-section" id="ndf">
+    <h2>NDF (National Demand Forecast)</h2>
+    <p>National Grid ESO's published forecast of total UK electricity demand. Used in the procurement gap analysis as the demand side of the residual calculation.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>startTime</code></td><td>ISO datetime</td><td>Start of the 30-min period</td></tr>
+          <tr><td><code>publishTime</code></td><td>ISO datetime</td><td>When this forecast version was published</td></tr>
+          <tr><td><code>demand</code></td><td>float</td><td>Forecast demand in MW</td></tr>
+          <tr><td><code>boundary</code></td><td>string</td><td>Only <code>N</code> (National) records are used</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Granularity: <strong>half-hourly</strong>. Same averaging to hourly applied as FUELHH. Same latest-before-cutoff selection logic as WINDFOR.</p>
+  </section>
+
+  <!-- FORECAST SELECTION -->
+  <section class="doc-section" id="forecast-selection">
+    <h2>Forecast Selection</h2>
+    <p>For any given delivery hour, there are many published forecast vintages. The app picks the one a market participant would have seen at their decision time.</p>
+
+    <h3>Algorithm</h3>
+    <pre><code><span class="cm"># 1. Filter: only forecasts published on or before the cutoff</span>
+eligible = [f for f in forecasts if f[<span class="st">"publishTime"</span>] &lt;= cutoff_dt]
+
+<span class="cm"># 2. For each delivery startTime, pick the maximum publishTime</span>
+best = {}
+for record in eligible:
+    key = record[<span class="st">"startTime"</span>]
+    if key not in best or record[<span class="st">"publishTime"</span>] &gt; best[key][<span class="st">"publishTime"</span>]:
+        best[key] = record
+
+<span class="cm"># 3. Keep only forward-looking periods (delivery AFTER the cutoff)</span>
+selected = {k: v for k, v in best.items() if k &gt; cutoff_dt}</code></pre>
+
+    <div class="callout tip">
+      <span class="callout-icon">✅</span>
+      <p><strong>Why forward-looking only?</strong> The cutoff is the moment the day-ahead decision is made. Delivery periods <em>before</em> the cutoff have already passed and are irrelevant to the procurement decision.</p>
+    </div>
+
+    <h3>Lead Hours</h3>
+    <p>Each delivery period is assigned a lead time: how far ahead the forecast is looking from the decision cutoff.</p>
+    <pre><code>lead_hours = (delivery_time - cutoff_dt).total_seconds() / 3600</code></pre>
+    <p>Lead hours drive the <strong>Lead-Time Breakdown</strong> chart, which shows how accuracy degrades with time horizon.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Bucket</th><th>Range</th><th>Typical context</th></tr></thead>
+        <tbody>
+          <tr><td>0–24 h</td><td>0 ≤ lead &lt; 24</td><td>Same-day / next-day delivery</td></tr>
+          <tr><td>24–48 h</td><td>24 ≤ lead &lt; 48</td><td>Day-ahead market delivery</td></tr>
+          <tr><td>48–72 h</td><td>48 ≤ lead &lt; 72</td><td>Two-day forward</td></tr>
+          <tr><td>72 h+</td><td>≥ 72</td><td>Long-range, higher uncertainty</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- GRANULARITY -->
+  <section class="doc-section" id="granularity">
+    <h2>Granularity Mismatch</h2>
+    <p>WINDFOR is published in <strong>hourly</strong> buckets. FUELHH and NDF are <strong>half-hourly</strong>. To compare them, all half-hourly series are averaged into hourly buckets.</p>
+
+    <pre><code><span class="cm"># Group half-hourly records by their :00 hour key</span>
+buckets = {}
+for rec in actuals:
+    hour_key = rec[<span class="st">"startTime"</span>].replace(minute=<span class="nb">0</span>, second=<span class="nb">0</span>, microsecond=<span class="nb">0</span>)
+    buckets.setdefault(hour_key, []).append(rec[<span class="st">"generation"</span>])
+
+<span class="cm"># Average the two 30-min values per hour</span>
+hourly = {k: sum(v) / len(v) for k, v in buckets.items()}</code></pre>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <p><strong>Why average?</strong> WINDFOR reports an average MW rate for each hour. FUELHH also reports average MW for each 30-min period. Averaging two half-hours preserves the MW scale — no unit conversion required.</p>
+    </div>
+  </section>
+
+  <!-- METRICS -->
+  <section class="doc-section" id="metrics">
+    <h2>Accuracy Metrics</h2>
+    <p>All metrics are computed only over periods where both a forecast and an actual are available (matched periods).</p>
+
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-name">MAE</div>
+        <div class="metric-formula">Σ|forecast − actual| / n</div>
+        <p>Mean Absolute Error. Average magnitude of forecast error in MW. The primary headline metric.</p>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">RMSE</div>
+        <div class="metric-formula">√(Σ(forecast − actual)² / n)</div>
+        <p>Root Mean Square Error. Penalises large errors more than MAE. Always ≥ MAE.</p>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">Bias</div>
+        <div class="metric-formula">Σ(forecast − actual) / n</div>
+        <p>Signed average error. Positive = systematic over-forecast. Negative = under-forecast.</p>
+      </div>
+      <div class="metric-card">
+        <div class="metric-name">WAPE</div>
+        <div class="metric-formula">Σ|error| / Σ|actual| × 100</div>
+        <p>Weighted Absolute Percentage Error. Scale-free. Avoids division-by-zero at low generation.</p>
+      </div>
+    </div>
+
+    <h3>Coverage</h3>
+    <p>Not every delivery period will have an actual available (actuals are published after real-time). Coverage is reported as a percentage.</p>
+    <pre><code>coverage_pct = matched_periods / total_forecast_periods × 100</code></pre>
+    <p>If coverage falls below 80%, a warning banner is shown on the Wind Accuracy tab.</p>
+
+    <h3>Capacity Factor</h3>
+    <pre><code>capacity_factor = avg(actual_MW) / 30_000 × 100  <span class="cm"># assumes 30 GW installed</span></code></pre>
+  </section>
+
+  <!-- PROCUREMENT -->
+  <section class="doc-section" id="procurement">
+    <h2>Procurement Gap Analysis</h2>
+    <p>The core business question: <em>a market participant buys electricity from the day-ahead market to serve their consumers. Wind generation reduces how much they need to buy. How wrong was their procurement plan?</em></p>
+
+    <div class="formula-grid">
+      <div class="formula-card">
+        <h4>Forecasted procurement need</h4>
+        <div class="formula">= Demand forecast − Wind forecast</div>
+        <p>What the market said: buy this much from other sources.</p>
+      </div>
+      <div class="formula-card">
+        <h4>Actual procurement need</h4>
+        <div class="formula">= Actual demand − Actual wind</div>
+        <p>What really happened: this much power came from non-wind sources.</p>
+      </div>
+      <div class="formula-card">
+        <h4>Procurement gap error</h4>
+        <div class="formula">= Forecasted need − Actual need</div>
+        <p><strong>+</strong> = over-bought (wasted cost). <strong>−</strong> = under-bought (must top-up at balancing market).</p>
+      </div>
+    </div>
+
+    <h3>Under-bought vs Over-bought</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Gap sign</th><th>Meaning</th><th>Commercial consequence</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong style="color:var(--blue)">Negative (−)</strong></td>
+            <td>Under-bought — you purchased less than you needed</td>
+            <td>Must buy the shortfall on the balancing / intraday market, typically at a price premium</td>
+          </tr>
+          <tr>
+            <td><strong style="color:var(--amber)">Positive (+)</strong></td>
+            <td>Over-bought — you purchased more than you needed</td>
+            <td>Surplus capacity: either sold back or written off as wasted cost</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <p>The <strong>total under-bought volume</strong> (sum of all negative gap periods) is the most actionable number — it tells you exactly how many MW·h you would have needed to source from the balancing market on that day.</p>
+    </div>
+
+    <h3>Demand Actuals Derivation</h3>
+    <p>Elexon does not publish a dedicated "actual demand" endpoint. Instead, the app sums all fuel types from FUELHH per period:</p>
+    <pre><code><span class="cm"># Gas + Nuclear + Wind + Solar + Hydro + Imports + ... = Total demand</span>
+totals = {}
+for item in fuelhh_all_fuels:
+    t = parse_dt(item[<span class="st">"startTime"</span>])
+    totals[t] = totals.get(t, <span class="nb">0.0</span>) + float(item[<span class="st">"generation"</span>])</code></pre>
+    <p>This works because the grid is always in balance: total metered generation ≡ total consumption at every settlement period.</p>
+  </section>
+
+  <!-- API REFERENCE -->
+  <section class="doc-section" id="api">
+    <h2>API Reference</h2>
+    <p>The backend exposes 4 endpoints under the <code>/api</code> prefix. Interactive docs are available at <code>/api/docs</code> (Swagger) and <code>/api/redoc</code>.</p>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/health</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Liveness check. Also pings Elexon BMRS to verify upstream connectivity.</p>
+        <pre><code>{
+  <span class="st">"status"</span>: <span class="st">"ok"</span>,            <span class="cm">// "ok" or "degraded"</span>
+  <span class="st">"upstream_elexon"</span>: <span class="st">"ok"</span>,   <span class="cm">// "ok" or "unreachable"</span>
+  <span class="st">"latency_ms"</span>: <span class="nb">142.3</span>
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/analysis</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Full wind forecast accuracy analysis for a single decision date and cutoff.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Required</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>decision_date</code></td><td>Yes</td><td>—</td><td>Date in YYYY-MM-DD. 2015-01-01 to today.</td></tr>
+              <tr><td><code>cutoff_time</code></td><td>No</td><td><code>10:00</code></td><td>HH:MM UTC. Decision cutoff time.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Returns: <code>AnalysisResponse</code> — periods, metrics, coverage, lead-time breakdown, peak/worst highlights.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/procurement</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Procurement gap analysis for a single decision date. Fetches wind + NDF forecasts and wind + demand actuals in parallel.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Required</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>decision_date</code></td><td>Yes</td><td>—</td><td>Date in YYYY-MM-DD.</td></tr>
+              <tr><td><code>cutoff_time</code></td><td>No</td><td><code>10:00</code></td><td>HH:MM UTC.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Returns: <code>ProcurementResponse</code> — per-period residual demand, procurement gap errors, and summary metrics.</p>
+      </div>
+    </div>
+
+    <div class="endpoint">
+      <div class="endpoint-header">
+        <span class="method">GET</span>
+        <span class="path">/api/trend</span>
+      </div>
+      <div class="endpoint-body">
+        <p>Multi-day accuracy trend. Runs <code>_analyse()</code> in parallel for each day using <code>asyncio.gather</code>.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Param</th><th>Required</th><th>Default</th><th>Description</th></tr></thead>
+            <tbody>
+              <tr><td><code>start_date</code></td><td>Yes</td><td>—</td><td>YYYY-MM-DD</td></tr>
+              <tr><td><code>end_date</code></td><td>Yes</td><td>—</td><td>YYYY-MM-DD. Max 30 days range.</td></tr>
+              <tr><td><code>cutoff_time</code></td><td>No</td><td><code>10:00</code></td><td>HH:MM UTC applied to every day.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Returns: <code>TrendResponse</code> — one <code>TrendDay</code> per day with MAE, RMSE, bias, WAPE, coverage. Days that fail individually are returned with an <code>error</code> field rather than failing the whole request.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SERVICES -->
+  <section class="doc-section" id="services">
+    <h2>Backend Services</h2>
+
+    <h3>elexon_client.py</h3>
+    <p>All Elexon HTTP calls. Handles parsing, validation, retry, and caching.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Function</th><th>Dataset</th><th>Returns</th></tr></thead>
+        <tbody>
+          <tr><td><code>fetch_windfor(from_dt, to_dt)</code></td><td>WINDFOR/stream</td><td>List of <code>{startTime, publishTime, generation}</code></td></tr>
+          <tr><td><code>fetch_fuelhh_wind(from_dt, to_dt)</code></td><td>FUELHH/stream?fuelType=WIND</td><td>List of <code>{startTime, generation}</code></td></tr>
+          <tr><td><code>fetch_fuelhh_demand(from_dt, to_dt)</code></td><td>FUELHH/stream (all fuels)</td><td>List of <code>{startTime, demand}</code> — totalled</td></tr>
+          <tr><td><code>fetch_ndf(from_dt, to_dt)</code></td><td>NDF/stream</td><td>List of <code>{startTime, publishTime, demand}</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>forecast_selection.py</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Function</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>select_latest_forecasts(forecasts, cutoff)</code></td><td>Returns dict[datetime → best forecast] for each delivery hour.</td></tr>
+          <tr><td><code>aggregate_actuals_to_hourly(actuals)</code></td><td>Averages half-hourly wind actuals into hourly buckets.</td></tr>
+          <tr><td><code>build_periods(selected, actuals, cutoff)</code></td><td>Assembles <code>PeriodResult</code> list with errors and lead hours.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>procurement.py</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Function</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>select_latest(records, cutoff)</code></td><td>Generic latest-before-cutoff selector (used for NDF).</td></tr>
+          <tr><td><code>aggregate_to_hourly_avg(records, value_key)</code></td><td>Generic half-hourly → hourly averager for any numeric key.</td></tr>
+          <tr><td><code>build_procurement_periods(wind_periods, demand_fcst, demand_act, cutoff)</code></td><td>Computes residual forecast/actual and gap error per period.</td></tr>
+          <tr><td><code>compute_procurement_metrics(periods)</code></td><td>MAE, RMSE, bias, WAPE over matched procurement periods.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CACHING -->
+  <section class="doc-section" id="caching">
+    <h2>Caching & Retry</h2>
+
+    <h3>In-memory TTL cache</h3>
+    <p>Every Elexon HTTP response is cached in a process-level dict keyed by a SHA-256 of the URL + params. Cache hit avoids re-fetching on repeated identical requests (e.g. switching dashboard tabs).</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data age</th><th>TTL</th><th>Rationale</th></tr></thead>
+        <tbody>
+          <tr><td>Last 48 hours (recent)</td><td>5 minutes (<code>CACHE_TTL_SECONDS</code>)</td><td>Actuals may still be arriving; keep fresh</td></tr>
+          <tr><td>Older than 48 hours</td><td>1 hour (<code>CACHE_TTL_HISTORICAL</code>)</td><td>Historical data is immutable; cache aggressively</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Retry with exponential backoff</h3>
+    <p>Every Elexon call retries up to <code>MAX_RETRIES</code> times (default 3) on network errors and HTTP 5xx responses. 4xx errors are not retried.</p>
+    <pre><code>attempt 1  → immediately
+attempt 2  → wait 1s
+attempt 3  → wait 2s
+→ raises RuntimeError if all attempts fail</code></pre>
+  </section>
+
+  <!-- UI -->
+  <section class="doc-section" id="ui">
+    <h2>Dashboard UI</h2>
+    <p>Single-page React application with two tabs sharing the same date/cutoff controls.</p>
+
+    <h3>Wind Forecast Accuracy tab</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Section</th><th>Component</th><th>Shows</th></tr></thead>
+        <tbody>
+          <tr><td>Context strip</td><td>inline</td><td>Decision date, cutoff, delivery periods, forecast runs used</td></tr>
+          <tr><td>Summary highlights</td><td><code>SummaryStrip</code></td><td>Peak actual, worst error, capacity factor</td></tr>
+          <tr><td>Metric cards</td><td><code>MetricCards</code></td><td>MAE, RMSE, bias, WAPE, coverage</td></tr>
+          <tr><td>Forecast chart</td><td><code>ForecastChart</code></td><td>Forecast vs actual generation over time</td></tr>
+          <tr><td>Error chart</td><td><code>ErrorChart</code></td><td>Signed forecast error per period</td></tr>
+          <tr><td>Lead-time chart</td><td><code>LeadTimeChart</code></td><td>MAE by lead-time bucket (0–24 h, 24–48 h, etc.)</td></tr>
+          <tr><td>Error histogram</td><td><code>ErrorHistogram</code></td><td>Distribution of absolute errors</td></tr>
+          <tr><td>Trend chart</td><td><code>TrendChart</code></td><td>7-day MAE rolling chart (auto-fetches /api/trend)</td></tr>
+          <tr><td>Period table</td><td><code>PeriodTable</code></td><td>All periods sortable by time / error</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Procurement Gap Analysis tab</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Section</th><th>Shows</th></tr></thead>
+        <tbody>
+          <tr><td>Actual power to procure</td><td>Avg actual need, peak hour, avg forecast, shortfall hours</td></tr>
+          <tr><td>Under-bought card</td><td>Total shortfall MW·h, worst shortfall hour, avg shortfall per hour</td></tr>
+          <tr><td>Over-bought card</td><td>Total excess MW·h, avg over-buy per hour</td></tr>
+          <tr><td>Procurement chart</td><td>Planned vs actually needed (lines) + under/over bars per hour</td></tr>
+          <tr><td>Shortfall table</td><td>Only under-bought hours sorted by largest shortfall</td></tr>
+          <tr><td>Full detail table</td><td>All periods with demand F/cast, actual demand, wind F/cast, actual wind, gap</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Tab behaviour</h3>
+    <ul style="margin: 8px 0 16px 20px; color: var(--fg-2); font-size: 14px; line-height: 2.2;">
+      <li>Wind tab data loads automatically on page open (yesterday, 10:00 cutoff).</li>
+      <li>Switching to Procurement tab triggers its own fetch if not yet loaded.</li>
+      <li>Changing the date or cutoff clears both caches. The active tab reloads on the next Fetch Data click.</li>
+    </ul>
+  </section>
+
+  <!-- COMPONENTS -->
+  <section class="doc-section" id="components">
+    <h2>Frontend Components</h2>
+
+    <h3>ErrorBoundary</h3>
+    <p>Class component wrapping the whole Dashboard. Catches any unhandled React render error and shows a recovery screen with a "Try again" button that resets the boundary state.</p>
+
+    <h3>DateControls</h3>
+    <p>Date picker (2015-01-01 to today) and cutoff time input (HH:MM). Triggers the parent's <code>onSubmit</code> callback. Disables all inputs while loading.</p>
+
+    <h3>API client (<code>src/api/client.ts</code>)</h3>
+    <pre><code><span class="fn">fetchAnalysis</span>(decisionDate: string, cutoffTime: string): Promise&lt;AnalysisResponse&gt;
+<span class="fn">fetchTrend</span>(startDate: string, endDate: string, cutoffTime: string): Promise&lt;TrendResponse&gt;
+<span class="fn">fetchProcurement</span>(decisionDate: string, cutoffTime: string): Promise&lt;ProcurementResponse&gt;</code></pre>
+    <p>All functions proxy through Vite (<code>/api → localhost:8000</code> in dev) or nginx (<code>/api/ → backend:8000</code> in Docker). Non-OK responses throw with the backend's <code>detail</code> message.</p>
+  </section>
+
+  <!-- LOCAL DEV -->
+  <section class="doc-section" id="local-dev">
+    <h2>Local Development</h2>
+
+    <h3>Prerequisites</h3>
+    <ul style="margin: 8px 0 12px 20px; color: var(--fg-2); font-size: 14px; line-height: 2.2;">
+      <li>Python 3.11+</li>
+      <li>Node.js 20+</li>
+    </ul>
+
+    <h3>Backend</h3>
+    <pre><code>cd backend
+python -m venv .venv
+.venv\Scripts\activate          <span class="cm"># Windows</span>
+# source .venv/bin/activate     # macOS / Linux
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000</code></pre>
+    <p>Backend available at <code>http://localhost:8000</code>. Swagger UI at <code>http://localhost:8000/api/docs</code>.</p>
+
+    <h3>Frontend</h3>
+    <pre><code>cd frontend
+npm install
+npm run dev</code></pre>
+    <p>Frontend available at <code>http://localhost:5173</code>. The Vite dev server proxies <code>/api/*</code> to the backend automatically.</p>
+  </section>
+
+  <!-- DOCKER -->
+  <section class="doc-section" id="docker">
+    <h2>Docker Deployment</h2>
+    <pre><code><span class="cm"># Build and start both services</span>
+docker compose up --build
+
+<span class="cm"># Access</span>
+<span class="cm"># Dashboard:  http://localhost:80</span>
+<span class="cm"># API docs:   http://localhost:8000/api/docs</span>
+<span class="cm"># Health:     http://localhost:8000/api/health</span></code></pre>
+
+    <h3>Production hardening applied</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Concern</th><th>Solution</th></tr></thead>
+        <tbody>
+          <tr><td>Root container</td><td>Both backend and nginx run as dedicated non-root users</td></tr>
+          <tr><td>Health checks</td><td>Docker HEALTHCHECK on both images; <code>depends_on: condition: service_healthy</code></td></tr>
+          <tr><td>Build context size</td><td><code>.dockerignore</code> excludes <code>.venv</code> and <code>node_modules</code></td></tr>
+          <tr><td>Reproducible builds</td><td>Frontend uses <code>npm ci</code> not <code>npm install</code></td></tr>
+          <tr><td>nginx config validation</td><td><code>nginx -t</code> runs at Docker build time</td></tr>
+          <tr><td>Response compression</td><td>GZipMiddleware (backend) + nginx gzip (frontend assets)</td></tr>
+          <tr><td>Security headers</td><td>nginx: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection, Referrer-Policy</td></tr>
+          <tr><td>Asset caching</td><td>Vite-fingerprinted JS/CSS served with <code>Cache-Control: immutable, 1y</code></td></tr>
+          <tr><td>Concurrency</td><td>uvicorn runs 2 workers; nginx keepalive to backend</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ENV VARS -->
+  <section class="doc-section" id="env-vars">
+    <h2>Configuration</h2>
+    <p>All backend settings are read from environment variables (with defaults). Copy <code>.env.example</code> to <code>backend/.env</code> for local overrides.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Variable</th><th>Default</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td><code>ELEXON_BASE_URL</code></td><td><code>https://data.elexon.co.uk/bmrs/api/v1</code></td><td>Elexon BMRS base URL</td></tr>
+          <tr><td><code>CORS_ORIGINS</code></td><td><code>http://localhost:5173,…</code></td><td>Comma-separated allowed origins</td></tr>
+          <tr><td><code>REQUEST_TIMEOUT_SECONDS</code></td><td><code>30</code></td><td>HTTP timeout per Elexon request (seconds)</td></tr>
+          <tr><td><code>MAX_RETRIES</code></td><td><code>3</code></td><td>Retry attempts on network / 5xx errors</td></tr>
+          <tr><td><code>CACHE_TTL_SECONDS</code></td><td><code>300</code></td><td>Cache TTL for recent data (last 48 h)</td></tr>
+          <tr><td><code>CACHE_TTL_HISTORICAL</code></td><td><code>3600</code></td><td>Cache TTL for historical data (older than 48 h)</td></tr>
+          <tr><td><code>MAX_TREND_DAYS</code></td><td><code>30</code></td><td>Maximum date range for /api/trend</td></tr>
+          <tr><td><code>LOG_LEVEL</code></td><td><code>INFO</code></td><td>Python logging level (DEBUG / INFO / WARNING)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- FUTURE SCOPE -->
+  <section class="doc-section" id="scope">
+    <h2>Future Scope &amp; Feature Roadmap</h2>
+    <p>The current dashboard covers wind forecast accuracy and day-ahead procurement gap analysis. This section documents every known gap — business-critical missing factors, additional data platforms, and technical improvements — in priority order.</p>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <p><strong>Current limitation:</strong> The procurement gap analysis only accounts for wind generation. Solar, hydro, interconnectors and other renewables are not yet included. This means residual demand figures can be materially incorrect on sunny or interconnector-heavy days.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:16px 0 32px;">
+      <div style="background:var(--red-bg);border:1px solid var(--red);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:var(--red);">5</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--red);margin-top:2px;">Critical gaps</div>
+        <div style="font-size:11px;color:var(--fg-2);margin-top:4px;">Affect accuracy of current numbers</div>
+      </div>
+      <div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:var(--amber);">5</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--amber);margin-top:2px;">Platforms to add</div>
+        <div style="font-size:11px;color:var(--fg-2);margin-top:4px;">New data sources &amp; signals</div>
+      </div>
+      <div style="background:var(--accent-bg);border:1px solid var(--accent);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:22px;font-weight:800;color:var(--accent);">5</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-top:2px;">Technical gaps</div>
+        <div style="font-size:11px;color:var(--fg-2);margin-top:4px;">Infrastructure &amp; quality</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-section" id="scope-business">
+    <h2>Business &amp; Analytical Gaps</h2>
+    <p>These are the gaps that most directly affect the correctness and commercial usefulness of the current analysis, ordered by priority.</p>
+
+    <!-- GAP 1 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--red);border-radius:0 12px 12px 0;padding:20px 22px;margin:20px 0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="background:var(--red-bg);color:var(--red);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;">Priority 1 — Critical</span>
+      </div>
+      <h3 style="margin:0 0 8px;">Solar Generation</h3>
+      <p style="font-size:13.5px;">Solar is the second-largest renewable in GB. On a summer day it can contribute 8,000–10,000 MW, dramatically reducing residual demand. The current procurement gap analysis ignores solar entirely, which means residual demand calculations are materially wrong during daylight hours in spring and summer.</p>
+      <h4>What needs to be added</h4>
+      <ul style="margin:6px 0 12px 20px;color:var(--fg-2);font-size:13px;line-height:2.2;">
+        <li><strong style="color:var(--fg)">Solar forecast:</strong> Sheffield Solar API — publishes GB-wide solar generation forecasts, updated every 30 min, free for non-commercial use.</li>
+        <li><strong style="color:var(--fg)">Solar actuals:</strong> Already in <code>FUELHH</code> as <code>fuelType=SOLAR</code> — same pipeline as wind actuals.</li>
+        <li><strong style="color:var(--fg)">Combined residual:</strong> Residual demand = Demand forecast − Wind forecast − Solar forecast. This fixes the procurement gap numbers.</li>
+      </ul>
+      <div class="formula-grid" style="margin:0;">
+        <div class="formula-card">
+          <h4>Updated forecasted need</h4>
+          <div class="formula">= Demand fcst − Wind fcst − Solar fcst</div>
+        </div>
+        <div class="formula-card">
+          <h4>Updated actual need</h4>
+          <div class="formula">= Actual demand − Actual wind − Actual solar</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAP 2 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--red);border-radius:0 12px 12px 0;padding:20px 22px;margin:20px 0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="background:var(--red-bg);color:var(--red);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;">Priority 2 — Critical</span>
+      </div>
+      <h3 style="margin:0 0 8px;">Price Impact of Procurement Gap (£ Cost)</h3>
+      <p style="font-size:13.5px;">The dashboard tells you <em>how many MW</em> you were wrong by, but the real business KPI is <em>what it cost</em>. Elexon publishes imbalance prices every settlement period — the System Buy Price (SBP) when the system is short and the System Sell Price (SSP) when long. Without prices, a 500 MW shortfall at £50/MWh looks identical to a 500 MW shortfall at £1,200/MWh (a real balancing market spike).</p>
+      <h4>Datasets to add</h4>
+      <div class="table-wrap" style="margin:8px 0 12px;">
+        <table>
+          <thead><tr><th>Elexon Dataset</th><th>What it provides</th><th>Unit</th></tr></thead>
+          <tbody>
+            <tr><td><code>ISPSTACK</code></td><td>Imbalance Settlement Prices — SBP &amp; SSP per period</td><td>£/MWh</td></tr>
+            <tr><td><code>SYSDEM</code></td><td>System demand — cross-check for actual demand</td><td>MW</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h4>New metrics this enables</h4>
+      <ul style="margin:6px 0 0 20px;color:var(--fg-2);font-size:13px;line-height:2.2;">
+        <li><strong style="color:var(--fg)">Cost of under-buying:</strong> Shortfall MW·h × SBP = £ paid on balancing market</li>
+        <li><strong style="color:var(--fg)">Cost of over-buying:</strong> Surplus MW·h × (DA price − SSP) = £ wasted or lost on sell-back</li>
+        <li><strong style="color:var(--fg)">Total daily procurement cost error:</strong> The single most actionable number for a trading desk</li>
+      </ul>
+    </div>
+
+    <!-- GAP 3 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:0 12px 12px 0;padding:20px 22px;margin:20px 0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="background:var(--amber-bg);color:var(--amber);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;">Priority 3 — High Value</span>
+      </div>
+      <h3 style="margin:0 0 8px;">Intraday Forecast Comparison (Multiple Cutoff Times)</h3>
+      <p style="font-size:13.5px;">Traders do not make one decision per day — they continuously re-position as better forecasts become available throughout the day. Currently the app lets you pick one cutoff. A comparison mode across multiple cutoffs (e.g. Day-1 17:00, Day-0 08:00, Day-0 12:00, Gate Closure 1 h ahead) would show precisely when accuracy improves enough to justify re-trading, and what the expected cost saving is.</p>
+      <h4>What the feature would show</h4>
+      <ul style="margin:6px 0 0 20px;color:var(--fg-2);font-size:13px;line-height:2.2;">
+        <li>Side-by-side MAE at D-1, D-0 08:00, D-0 12:00, gate closure</li>
+        <li>MW improvement per re-forecast — is it worth the trading cost?</li>
+        <li>Which hours benefit most from later forecasts (e.g. peak demand periods)</li>
+      </ul>
+    </div>
+
+    <!-- GAP 4 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:0 12px 12px 0;padding:20px 22px;margin:20px 0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="background:var(--amber-bg);color:var(--amber);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;">Priority 4 — High Value</span>
+      </div>
+      <h3 style="margin:0 0 8px;">Demand Forecast Accuracy (NDF vs Actual)</h3>
+      <p style="font-size:13.5px;">The procurement gap is driven by two forecasts — wind <em>and</em> demand. The current dashboard only breaks out wind forecast error. NDF accuracy (demand forecast vs actual demand) is never shown separately. On days with high demand volatility (cold snaps, heatwaves, bank holidays), NDF error can exceed wind error and become the dominant driver of procurement gap.</p>
+      <h4>New metrics this enables</h4>
+      <ul style="margin:6px 0 0 20px;color:var(--fg-2);font-size:13px;line-height:2.2;">
+        <li>NDF MAE / bias vs wind forecast MAE / bias — which is worse?</li>
+        <li>Procurement gap decomposition: % attributable to wind error vs demand error</li>
+        <li>Worst demand forecast days — useful for identifying high-risk procurement periods</li>
+      </ul>
+    </div>
+
+    <!-- GAP 5 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--amber);border-radius:0 12px 12px 0;padding:20px 22px;margin:20px 0;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <span style="background:var(--amber-bg);color:var(--amber);font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.06em;">Priority 5 — Medium Value</span>
+      </div>
+      <h3 style="margin:0 0 8px;">Seasonal &amp; Monthly Breakdown</h3>
+      <p style="font-size:13.5px;">Wind accuracy and capacity factor vary dramatically across seasons. Winter brings higher wind output but also more volatile weather. Summer has lower wind but higher solar. Monthly or seasonal analysis would let users identify the highest-risk procurement periods across the year and set appropriate risk margins.</p>
+      <h4>What this would show</h4>
+      <ul style="margin:6px 0 0 20px;color:var(--fg-2);font-size:13px;line-height:2.2;">
+        <li>Average MAE by month / season over multiple years</li>
+        <li>Monthly capacity factor distribution (box plots)</li>
+        <li>Which months have highest procurement gap variance — risk calendar</li>
+        <li>Year-on-year comparison as installed capacity grows</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- OTHER PLATFORMS -->
+  <section class="doc-section" id="scope-platforms">
+    <h2>Other Platforms &amp; Data Sources</h2>
+    <p>Connecting additional data sources beyond Elexon BMRS would unlock price analysis, solar forecasts, and commercial forecast benchmarking.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin:20px 0 28px;">
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:var(--amber-bg);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;">☀️</div>
+          <div>
+            <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0;">Sheffield Solar</p>
+            <p style="font-size:11px;color:var(--fg-3);margin:0;">solar.sheffield.ac.uk</p>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">GB-wide solar generation forecasts updated every 30 min. Free for non-commercial use. Fills the single biggest gap in the current residual demand calculation.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-3);">GET /api/forecast/gb/?period=30&amp;key={API_KEY}</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:var(--red-bg);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;">💷</div>
+          <div>
+            <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0;">Elexon — Imbalance Prices</p>
+            <p style="font-size:11px;color:var(--fg-3);margin:0;">Same BMRS API — ISPSTACK dataset</p>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">System Buy Price (SBP) and System Sell Price (SSP) per settlement period. Already on the same Elexon API — just a new dataset query. Turns MW gap errors into £ cost.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-3);">GET /datasets/ISPSTACK/stream</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:var(--accent-bg);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;">🏭</div>
+          <div>
+            <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0;">N2EX / EPEX SPOT</p>
+            <p style="font-size:11px;color:var(--fg-3);margin:0;">UK day-ahead auction</p>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">Day-ahead market clearing prices for GB. Enables comparison between the price paid at auction vs what you'd pay on the balancing market for shortfalls. Quantifies the premium of being caught short.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-3);">Commercial API — registration required</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:var(--green-bg);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;">🔌</div>
+          <div>
+            <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0;">National Grid ESO Data Portal</p>
+            <p style="font-size:11px;color:var(--fg-3);margin:0;">data.nationalgrideso.com</p>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">Higher-resolution demand data, interconnector flows (France, Belgium, Norway, Ireland), carbon intensity forecasts, and embedded wind/solar generation (not metered via FUELHH). Free public API.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-3);">REST API + CSV download, no auth needed</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:var(--accent-bg);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;">📊</div>
+          <div>
+            <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0;">Elexon — BM Actions (SOSO)</p>
+            <p style="font-size:11px;color:var(--fg-3);margin:0;">Balancing Mechanism</p>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">System operator actions taken to balance the grid each period. Shows what generation was instructed up/down and at what price. Provides ground-truth for what the imbalance actually cost the system operator.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--fg-3);">GET /datasets/SOSO/stream</div>
+      </div>
+
+    </div>
+
+    <h3>Integration priority</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>Platform</th><th>Effort</th><th>Impact</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Sheffield Solar</td><td>Low</td><td>Very High</td><td>Fixes residual demand calculation, free API, same pattern as WINDFOR</td></tr>
+          <tr><td>2</td><td>Elexon ISPSTACK</td><td>Very Low</td><td>Very High</td><td>Same API already in use — just a new dataset. Unlocks £ cost metrics</td></tr>
+          <tr><td>3</td><td>National Grid ESO Portal</td><td>Medium</td><td>High</td><td>Interconnector flows &amp; embedded generation — improves demand accuracy</td></tr>
+          <tr><td>4</td><td>N2EX / EPEX SPOT</td><td>High</td><td>High</td><td>Commercial API, enables day-ahead vs balancing price comparison</td></tr>
+          <tr><td>5</td><td>Elexon SOSO</td><td>Medium</td><td>Medium</td><td>Adds BM action context for power users and analysts</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TECHNICAL GAPS -->
+  <section class="doc-section" id="scope-technical">
+    <h2>Technical Gaps</h2>
+    <p>Infrastructure and code quality improvements needed before the application is used in a production trading environment.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin:18px 0 28px;">
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">CSV / Excel Export</div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">No way to download the period table or procurement gap data. Traders need raw numbers for their own offline models and reports. Should export all columns visible in the current table.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-size:11px;color:var(--fg-3);">Backend: <code>GET /api/analysis/export?format=csv</code><br>Frontend: download button per table</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">Authentication &amp; Access Control</div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">The app is currently fully open — anyone with the URL can use it. For a commercial tool, at minimum an API key or OAuth login should gate access. Role-based access could restrict who can see price data vs accuracy data.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-size:11px;color:var(--fg-3);">Options: API key header, OAuth2 / JWT, Clerk/Auth0</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">Rate Limiting</div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">The <code>/api/trend</code> endpoint fires up to 30 parallel Elexon requests. No throttle exists. A single user or a misconfigured client could exhaust the backend or hit Elexon rate limits, causing 429 errors for everyone.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-size:11px;color:var(--fg-3);">Add: slowapi / fastapi-limiter per IP + per endpoint</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">Unit &amp; Integration Tests</div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">Zero tests exist. The forecast selection algorithm, metric calculations, and procurement gap formulas all need test coverage. A single off-by-one in lead-hours or an incorrect averaging step could silently produce wrong numbers.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-size:11px;color:var(--fg-3);">pytest for backend · Vitest for frontend calculations</div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">Comparison Mode</div>
+        <p style="font-size:13px;color:var(--fg-2);margin:0 0 8px;">No side-by-side view of two dates, two cutoff times, or two forecast providers. This is the most requested feature for forecast benchmarking — showing whether a different decision cutoff would have resulted in a better procurement outcome.</p>
+        <div style="background:var(--code-bg);border-radius:7px;padding:8px 10px;font-size:11px;color:var(--fg-3);">UI: split-panel with two independent date pickers</div>
+      </div>
+
+    </div>
+
+    <h3>Implementation roadmap summary</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Feature</th><th>Type</th><th>Effort</th><th>Unlocks</th></tr></thead>
+        <tbody>
+          <tr><td>Solar generation (Sheffield Solar)</td><td>Data source</td><td>Low</td><td>Correct residual demand for all seasons</td></tr>
+          <tr><td>Imbalance prices (ISPSTACK)</td><td>Data source</td><td>Very low</td><td>£ cost of every procurement gap period</td></tr>
+          <tr><td>CSV export</td><td>Feature</td><td>Low</td><td>Offline analysis in Excel / Python</td></tr>
+          <tr><td>Demand forecast accuracy (NDF vs actual)</td><td>Analysis</td><td>Low</td><td>Decompose gap into wind error vs demand error</td></tr>
+          <tr><td>Intraday cutoff comparison</td><td>Feature</td><td>Medium</td><td>Optimal re-trading decision timing</td></tr>
+          <tr><td>Rate limiting</td><td>Infrastructure</td><td>Low</td><td>Production stability</td></tr>
+          <tr><td>Authentication</td><td>Infrastructure</td><td>Medium</td><td>Commercial deployment readiness</td></tr>
+          <tr><td>Unit tests</td><td>Quality</td><td>Medium</td><td>Confidence in calculation correctness</td></tr>
+          <tr><td>Seasonal breakdown</td><td>Analysis</td><td>Medium</td><td>Long-range risk planning</td></tr>
+          <tr><td>National Grid ESO Portal</td><td>Data source</td><td>Medium</td><td>Interconnector flows, embedded generation</td></tr>
+          <tr><td>Comparison mode (side-by-side)</td><td>Feature</td><td>High</td><td>Forecast provider benchmarking</td></tr>
+          <tr><td>N2EX / EPEX SPOT prices</td><td>Data source</td><td>High</td><td>Day-ahead vs balancing price spread</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TOOLS USED -->
+  <section class="doc-section" id="tools">
+    <h2>Tools Used</h2>
+    <p>This project was built using a combination of AI research tools and AI coding assistants throughout the full development lifecycle.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:20px 0 28px;">
+
+      <!-- Research tools -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#10a37f,#1a7f64);padding:20px 22px 16px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="width:38px;height:38px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">🔬</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.02em;">Research &amp; Information</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:1px;">Domain knowledge &amp; exploration</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:18px 22px;">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:32px;height:32px;background:#10a37f22;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🤖</div>
+              <div>
+                <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0 0 3px;">ChatGPT (OpenAI)</p>
+                <p style="font-size:12px;color:var(--fg-2);margin:0;line-height:1.6;">Used for researching UK electricity market concepts, understanding Elexon BMRS dataset structures, and exploring procurement gap analysis methodology and business context.</p>
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--border);"></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:32px;height:32px;background:#1a73e822;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✦</div>
+              <div>
+                <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0 0 3px;">Google Gemini</p>
+                <p style="font-size:12px;color:var(--fg-2);margin:0;line-height:1.6;">Used for additional research on wind forecasting accuracy metrics (MAE, RMSE, WAPE), day-ahead market procurement workflows, and validation of formula approaches.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Development tools -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+        <div style="background:linear-gradient(135deg,#2563eb,#1d4ed8);padding:20px 22px 16px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="width:38px;height:38px;background:rgba(255,255,255,0.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;">💻</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#fff;letter-spacing:.02em;">Coding &amp; Development</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:1px;">Full-stack implementation</div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:18px 22px;">
+          <div style="display:flex;flex-direction:column;gap:14px;">
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:32px;height:32px;background:#2563eb22;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">🖥️</div>
+              <div>
+                <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0 0 3px;">Claude Code — VS Code Extension</p>
+                <p style="font-size:12px;color:var(--fg-2);margin:0;line-height:1.6;">Used for the complete end-to-end development of this project — FastAPI backend, React frontend, Docker configuration, all services, components, API integration, and this documentation. Every file in the codebase was written and refined using Claude Code running inside VS Code.</p>
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--border);"></div>
+            <div style="display:flex;align-items:flex-start;gap:12px;">
+              <div style="width:32px;height:32px;background:#2563eb22;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">⚡</div>
+              <div>
+                <p style="font-size:13px;font-weight:700;color:var(--fg);margin:0 0 3px;">Claude Code — CLI</p>
+                <p style="font-size:12px;color:var(--fg-2);margin:0;line-height:1.6;">Used for running iterative development sessions, debugging backend errors, production hardening (retry logic, caching, Docker non-root setup), and generating this documentation page.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <h3>Development Workflow</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0 24px;">
+      <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">Phase 1 — Research</div>
+        <p style="font-size:12px;color:var(--fg-2);margin:0;line-height:1.6;">ChatGPT &amp; Gemini used to understand UK electricity market mechanics, Elexon API structure, procurement gap methodology, and accuracy metrics used in industry.</p>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">Phase 2 — Architecture</div>
+        <p style="font-size:12px;color:var(--fg-2);margin:0;line-height:1.6;">Claude Code designed the full project structure — FastAPI + React + Docker stack, service layer breakdown, Pydantic schemas, and API contract.</p>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">Phase 3 — Implementation</div>
+        <p style="font-size:12px;color:var(--fg-2);margin:0;line-height:1.6;">All backend services, React components, Recharts visualisations, Tailwind styling, and Docker configuration written iteratively with Claude Code in VS Code.</p>
+      </div>
+      <div style="background:var(--code-bg);border:1px solid var(--border);border-radius:10px;padding:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--fg-3);margin-bottom:6px;">Phase 4 — Production</div>
+        <p style="font-size:12px;color:var(--fg-2);margin:0;line-height:1.6;">Production hardening (retry, caching, non-root Docker, health checks, security headers, error boundaries) and full documentation generated with Claude Code.</p>
+      </div>
+    </div>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <p>This project demonstrates an AI-assisted development workflow where LLMs handle both the knowledge work (research, architecture decisions) and the implementation work (writing and debugging every line of code), with a human directing the product vision and requirements throughout.</p>
+    </div>
+  </section>
+
+  <!-- GLOSSARY -->
+  <section class="doc-section" id="glossary">
+    <h2>Glossary</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr><td><strong>BMRS</strong></td><td>Balancing Mechanism Reporting Service — Elexon's public data API for the UK electricity market.</td></tr>
+          <tr><td><strong>WINDFOR</strong></td><td>Wind generation forecast dataset. Published every ~30 min by National Grid ESO.</td></tr>
+          <tr><td><strong>FUELHH</strong></td><td>Half-hourly actual generation by fuel type. Published after each settlement period.</td></tr>
+          <tr><td><strong>NDF</strong></td><td>National Demand Forecast. Half-hourly demand forecast published by National Grid ESO.</td></tr>
+          <tr><td><strong>Cutoff time</strong></td><td>The moment the day-ahead procurement decision is made. Only forecasts published before this time are used.</td></tr>
+          <tr><td><strong>Lead hours</strong></td><td>Time from the cutoff to the delivery period. Longer lead = less accurate forecast.</td></tr>
+          <tr><td><strong>Residual demand</strong></td><td>Total demand minus wind generation = power that must come from other sources (gas, nuclear, imports, etc.).</td></tr>
+          <tr><td><strong>Procurement gap</strong></td><td>Forecasted residual − actual residual. Positive = over-bought. Negative = under-bought.</td></tr>
+          <tr><td><strong>Balancing market</strong></td><td>The near-real-time market where shortfalls are topped up, usually at a price premium to the day-ahead market.</td></tr>
+          <tr><td><strong>Settlement period</strong></td><td>A 30-minute interval in the UK electricity market. 48 periods per day.</td></tr>
+          <tr><td><strong>Forecast vintage</strong></td><td>A specific <code>publishTime</code> of a forecast. Multiple vintages exist per delivery period.</td></tr>
+          <tr><td><strong>MAE</strong></td><td>Mean Absolute Error in MW.</td></tr>
+          <tr><td><strong>RMSE</strong></td><td>Root Mean Square Error in MW. Penalises large errors more than MAE.</td></tr>
+          <tr><td><strong>WAPE</strong></td><td>Weighted Absolute Percentage Error. Scale-free accuracy metric.</td></tr>
+          <tr><td><strong>Capacity factor</strong></td><td>Average actual wind generation as a percentage of assumed installed capacity (30 GW).</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// Sidebar toggle for mobile
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open')
+  document.getElementById('overlay').classList.toggle('active')
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open')
+  document.getElementById('overlay').classList.remove('active')
+}
+
+// Active nav link on scroll
+const sections = document.querySelectorAll('.doc-section')
+const navLinks = document.querySelectorAll('nav a')
+
+function setActive() {
+  let current = ''
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 60) current = s.id
+  })
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current)
+  })
+}
+window.addEventListener('scroll', setActive, { passive: true })
+setActive()
+</script>
+
+</body></html>

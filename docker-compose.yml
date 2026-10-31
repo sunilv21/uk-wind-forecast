@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://frontend:3000
+      - LOG_LEVEL=INFO
+      - REQUEST_TIMEOUT_SECONDS=30
+      - MAX_RETRIES=3
+      - CACHE_TTL_SECONDS=300
+      - CACHE_TTL_HISTORICAL=3600
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    networks:
+      - app
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app
+
+networks:
+  app:
+    driver: bridge
