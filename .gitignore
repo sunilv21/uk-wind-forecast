@@ -12,6 +12,9 @@ backend/app/services/__pycache__/
 frontend/node_modules/
 frontend/dist/
 
+# Video scripts — local only, not for GitHub
+video-scripts/
+
 # OS
 .DS_Store
 Thumbs.db
