@@ -1,5 +1,8 @@
 # UK Wind Generation Forecast & Accuracy Dashboard
 
+**Live demo:** [uk-wind-forecast-topaz.vercel.app](https://uk-wind-forecast-topaz.vercel.app)
+**API:** [uk-wind-forecast-1vw9.onrender.com/api/health](https://uk-wind-forecast-1vw9.onrender.com/api/health)
+
 A full-stack production-grade dashboard for analysing UK wind generation forecast accuracy and day-ahead procurement gap analysis, built on live data from the [Elexon BMRS API](https://www.elexon.co.uk/data/balancing-mechanism-reporting-service/).
 
 ---
