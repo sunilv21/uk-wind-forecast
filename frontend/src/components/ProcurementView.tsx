@@ -249,9 +249,10 @@ export default function ProcurementView({ data }: Props) {
             <XAxis dataKey="time" tick={{ fill: '#94a3b8', fontSize: 11 }} tickLine={false}
               axisLine={{ stroke: '#e2e8f0' }} interval="preserveStartEnd" />
             <YAxis yAxisId="gen" tick={{ fill: '#94a3b8', fontSize: 11 }} tickLine={false}
-              axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={44} />
+              axisLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} width={44}
+              domain={['auto', 'auto']} />
             <YAxis yAxisId="err" orientation="right" tick={{ fill: '#94a3b8', fontSize: 11 }}
-              tickLine={false} axisLine={false} width={52} />
+              tickLine={false} axisLine={false} width={52} domain={[0, 'auto']} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: 12, color: '#64748b', paddingTop: 8 }} />
             <Line yAxisId="gen" type="monotone" dataKey="Forecast wind"

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend,
+  CartesianGrid, Tooltip,
 } from 'recharts'
 import type { TrendResponse } from '../types/api'
 import { fetchTrend } from '../api/client'
@@ -20,30 +20,46 @@ interface TooltipProps {
 
 function CustomTooltip({ active, payload, label }: TooltipProps) {
   if (!active || !payload?.length) return null
+  const visible = payload.filter((p) => p.value !== null && p.value !== undefined)
+  if (!visible.length) return null
   return (
     <div className="bg-white border border-slate-200 rounded-xl shadow-lg p-3 text-xs">
       <p className="font-semibold text-slate-700 mb-2">{label}</p>
-      {payload.map((p) => p.value !== null && (
+      {visible.map((p) => (
         <div key={p.name} className="flex items-center justify-between gap-4 mb-1">
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
             <span className="text-slate-600">{p.name}</span>
           </div>
-          <span className="font-semibold text-slate-800">{p.value?.toLocaleString()} MW</span>
+          <span className="font-semibold text-slate-800">{(p.value as number).toLocaleString()} MW</span>
         </div>
       ))}
     </div>
   )
 }
 
+const metricConfig: Record<Metric, { label: string; color: string }> = {
+  mae:  { label: 'MAE',  color: '#3b82f6' },
+  rmse: { label: 'RMSE', color: '#8b5cf6' },
+  bias: { label: 'Bias', color: '#f59e0b' },
+}
+
 export default function TrendChart({ defaultCutoff }: Props) {
-  // Default to January 2026 — the assignment's required analysis period
   const [startDate, setStartDate] = useState('2026-01-01')
   const [endDate, setEndDate] = useState('2026-01-31')
-  const [metric, setMetric] = useState<Metric>('mae')
+  const [visible, setVisible] = useState<Record<Metric, boolean>>({ mae: true, rmse: true, bias: true })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<TrendResponse | null>(null)
+
+  function toggleMetric(m: Metric) {
+    setVisible((prev) => {
+      const next = { ...prev, [m]: !prev[m] }
+      // keep at least one visible
+      if (!next.mae && !next.rmse && !next.bias) return prev
+      return next
+    })
+  }
 
   async function load() {
     setLoading(true)
@@ -59,17 +75,10 @@ export default function TrendChart({ defaultCutoff }: Props) {
 
   const chartData = data?.days.map((d) => ({
     date: d.date.slice(5),
-    mae: d.mae,
+    mae:  d.mae,
     rmse: d.rmse,
     bias: d.bias,
-    error: d.error,
   })) ?? []
-
-  const metricConfig: Record<Metric, { label: string; color: string }> = {
-    mae: { label: 'MAE', color: '#3b82f6' },
-    rmse: { label: 'RMSE', color: '#8b5cf6' },
-    bias: { label: 'Bias', color: '#f59e0b' },
-  }
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
@@ -92,10 +101,15 @@ export default function TrendChart({ defaultCutoff }: Props) {
               className="border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-700 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="flex gap-1">
-            {(['mae', 'rmse', 'bias'] as Metric[]).map((m) => (
-              <button key={m} onClick={() => setMetric(m)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${metric === m ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                {m.toUpperCase()}
+            {(Object.keys(metricConfig) as Metric[]).map((m) => (
+              <button key={m} onClick={() => toggleMetric(m)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                  visible[m]
+                    ? 'text-white border-transparent'
+                    : 'bg-slate-100 text-slate-400 border-slate-200 hover:bg-slate-200'
+                }`}
+                style={visible[m] ? { backgroundColor: metricConfig[m].color } : undefined}>
+                {metricConfig[m].label}
               </button>
             ))}
           </div>
@@ -106,9 +120,7 @@ export default function TrendChart({ defaultCutoff }: Props) {
         </div>
       </div>
 
-      {error && (
-        <p className="text-xs text-red-500 mb-3">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
       {!data && !loading && (
         <div className="flex items-center justify-center h-48 bg-slate-50 rounded-xl text-slate-400 text-sm">
@@ -128,11 +140,16 @@ export default function TrendChart({ defaultCutoff }: Props) {
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
             <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 11 }} tickLine={false} axisLine={{ stroke: '#e2e8f0' }} />
             <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} tickLine={false} axisLine={false}
-              tickFormatter={(v) => `${v.toLocaleString()}`} width={52} />
+              tickFormatter={(v) => v.toLocaleString()} width={52} />
             <Tooltip content={<CustomTooltip />} />
-            <Line type="monotone" dataKey={metric} stroke={metricConfig[metric].color}
-              strokeWidth={2.5} dot={{ r: 4, fill: metricConfig[metric].color }}
-              name={`${metricConfig[metric].label} (MW)`} connectNulls={false} />
+            {(Object.keys(metricConfig) as Metric[]).map((m) =>
+              visible[m] ? (
+                <Line key={m} type="monotone" dataKey={m}
+                  stroke={metricConfig[m].color} strokeWidth={2.5}
+                  dot={{ r: 4, fill: metricConfig[m].color }}
+                  name={`${metricConfig[m].label} (MW)`} connectNulls={false} />
+              ) : null
+            )}
           </LineChart>
         </ResponsiveContainer>
       )}
