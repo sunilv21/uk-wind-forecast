@@ -100,13 +100,16 @@ export default function ProcurementView({ data }: Props) {
   const avgForecast = avg(data.periods.map(p => p.windForecast))
   const avgActual = avg(data.periods.map(p => p.actualWind))
 
-  const chartData = data.periods.map((p) => ({
-    time: fmtTime(p.deliveryTime),
-    'Forecast wind': p.windForecast,
-    'Actual wind': p.actualWind,
-    'Shortfall exposure': p.windError !== null && p.windError > 0 ? p.windError : null,
-    'Surplus exposure': p.windError !== null && p.windError < 0 ? Math.abs(p.windError) : null,
-  }))
+  // Filter to :00 periods only — WINDFOR publishes hourly, :30 slots have null windForecast
+  const chartData = data.periods
+    .filter((p) => new Date(p.deliveryTime).getUTCMinutes() === 0)
+    .map((p) => ({
+      time: fmtTime(p.deliveryTime),
+      'Forecast wind': p.windForecast,
+      'Actual wind': p.actualWind,
+      'Shortfall exposure': p.windError !== null && p.windError > 0 ? p.windError : null,
+      'Surplus exposure': p.windError !== null && p.windError < 0 ? Math.abs(p.windError) : null,
+    }))
 
   const shortfallTable = sortRows(shortfallPeriods, sfSort.col, sfSort.dir)
   const fullTable = sortRows(matched, fullSort.col, fullSort.dir)
@@ -237,10 +240,10 @@ export default function ProcurementView({ data }: Props) {
       {/* Chart */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
         <div className="mb-4">
-          <h2 className="text-base font-semibold text-slate-800">Forecast vs Actual Wind — 30-min periods</h2>
+          <h2 className="text-base font-semibold text-slate-800">Forecast vs Actual Wind — Hourly</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Blue bars = periods wind produced less than forecast (shortfall exposure) ·
-            Amber bars = periods wind produced more than forecast (surplus exposure) · MW
+            Orange line = forecast wind · grey line = actual wind ·
+            blue bars = shortfall exposure · amber bars = surplus exposure · MW
           </p>
         </div>
         <ResponsiveContainer width="100%" height={300}>
@@ -255,12 +258,31 @@ export default function ProcurementView({ data }: Props) {
               tickLine={false} axisLine={false} width={52} domain={[0, 'auto']} />
             <Tooltip content={<CustomTooltip />} />
             <Legend wrapperStyle={{ fontSize: 12, color: '#64748b', paddingTop: 8 }} />
-            <Line yAxisId="gen" type="monotone" dataKey="Actual wind"
-              stroke="#64748b" strokeWidth={2} dot={false} strokeDasharray="5 3" connectNulls={false} />
-            <Line yAxisId="gen" type="monotone" dataKey="Forecast wind"
-              stroke="#f97316" strokeWidth={2.5} dot={false} connectNulls={false} />
             <Bar yAxisId="err" dataKey="Shortfall exposure" fill="#60a5fa" radius={[3, 3, 0, 0]} fillOpacity={0.8} />
             <Bar yAxisId="err" dataKey="Surplus exposure" fill="#fbbf24" radius={[3, 3, 0, 0]} fillOpacity={0.8} />
+            <Line
+              yAxisId="gen"
+              type="monotone"
+              dataKey="Actual wind"
+              name="Actual Wind"
+              stroke="#64748b"
+              strokeWidth={2}
+              dot={false}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+            <Line
+              yAxisId="gen"
+              type="monotone"
+              dataKey="Forecast wind"
+              name="Forecast Wind"
+              stroke="#f97316"
+              strokeWidth={2.5}
+              dot={{ r: 3, fill: '#f97316', stroke: '#ffffff', strokeWidth: 1.5 }}
+              activeDot={{ r: 6, fill: '#f97316', stroke: '#ffffff', strokeWidth: 2 }}
+              connectNulls={true}
+              isAnimationActive={false}
+            />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
